@@ -246,13 +246,15 @@ class ObsWsClient extends EventEmitter {
         const name = String(inp?.inputName || '');
         const low = name.toLowerCase();
         if (micLow && low === micLow) continue;
-        if (/\b(mic|mikro|mikrofon|headset)\b/i.test(low)) continue;
+        if (/\b(mic|mikro|mikrofon)\b/i.test(low)) continue;
+        if (/\bheadset\b/i.test(low) && !/desktop|ausgabe|output|music|musik|spotify|system/i.test(low)) continue;
         const ch = Array.isArray(inp?.inputLevelsMul) ? inp.inputLevelsMul : [];
         if (!ch.length) continue;
         const lRaw = Number(ch[0]?.[1] ?? ch[0]?.[0] ?? 0) || 0;
         const rRaw = Number((ch[1] || ch[0])?.[1] ?? (ch[1] || ch[0])?.[0] ?? 0) || 0;
         const boost = /spotify|music|musik|amazon|apple|desktop|system|browser|chrome|edge|firefox/i.test(low) ? 1.15 : 1.0;
-        const lv = Math.min(1, Math.pow(Math.max(lRaw, rRaw), 0.55) * boost);
+        const peak = Math.max(lRaw, rRaw);
+        const lv = peak < 0.002 ? 0 : Math.min(1, Math.pow(peak, 0.5) * boost);
         if (lv > bestLevel) {
           bestLevel = lv;
           bestL = Math.min(1, Math.pow(lRaw, 0.55));
