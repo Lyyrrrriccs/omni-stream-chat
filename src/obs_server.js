@@ -4832,7 +4832,7 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
         }
       }
 
-      let musicPlaying = true;
+      let musicPlaying = false;
       let liveEq = null;
       let liveEqAt = 0;
 
@@ -4843,23 +4843,23 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
         const fresh = liveEq && (now - liveEqAt) < 700;
         const bands = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
         for (let i = 0; i < bars.length; i++) {
-          let h = 12;
+          let h = 8;
           if (bands) {
-            h = Math.max(10, Math.min(100, Math.round(bands[i] * 100)));
+            h = Math.max(8, Math.min(100, Math.round(bands[i] * 100)));
           } else if (fresh && typeof liveEq.level === 'number') {
             const lv = liveEq.level;
             const side = i < 9 ? (liveEq.left ?? lv) : (liveEq.right ?? lv);
             const curve = 0.65 + 0.35 * Math.sin((i / 17) * Math.PI);
             const ripple = 0.72 + 0.28 * Math.sin(now * 0.018 + i * 0.85);
-            h = Math.max(10, Math.min(100, Math.round(10 + side * curve * ripple * 96)));
+            h = side < 0.015 ? 8 : Math.max(8, Math.min(100, Math.round(8 + side * curve * ripple * 96)));
           } else if (musicPlaying) {
             const synth = Math.abs(Math.sin(now * 0.006 + i * 0.52) * Math.cos(now * 0.0032 - i * 0.27));
             h = Math.round(16 + synth * 78);
           } else {
-            h = 10 + Math.round(Math.sin(now * 0.002 + i * 0.4) * 3 + 3);
+            h = 8;
           }
           bars[i].style.height = h + '%';
-          bars[i].style.opacity = (!fresh && !musicPlaying) ? '0.42' : '0.96';
+          bars[i].style.opacity = (!fresh && !musicPlaying) ? '0.28' : '0.96';
         }
       }
       requestAnimationFrame(tickAbEq);
@@ -4870,7 +4870,7 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
           try {
             const p = JSON.parse(ev.data);
             if (p.type === 'spotify' && p.data) {
-              musicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+              musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
             } else if (p.type === 'audio-eq' && p.data) {
               liveEq = p.data;
               liveEqAt = performance.now();
@@ -5600,7 +5600,7 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
     };
     let curScheme = 'cyber_club';
     let bpm = 128;
-    let musicPlaying = true;
+    let musicPlaying = false;
     let liveEq = null;
     let liveEqAt = 0;
     const smoothBars = new Float32Array(36);
@@ -5692,7 +5692,7 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
           const p = JSON.parse(ev.data);
           if (p.type === 'game-stats') applyDjState(p.data);
           else if (p.type === 'spotify' && p.data) {
-            musicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
             if (p.data.title) {
               document.getElementById('djTicker').textContent = '🎵 ' + p.data.title + (p.data.artist ? ' — ' + p.data.artist : '');
             }
@@ -5783,7 +5783,7 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
       miniEq.appendChild(b);
     }
     let hasSpotifyTrack = false;
-    let musicPlaying = true;
+    let musicPlaying = false;
     let liveEq = null;
     let liveEqAt = 0;
 
@@ -5824,7 +5824,7 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
           const p = JSON.parse(ev.data);
           if (p.type === 'game-stats') applyDeck(p.data);
           else if (p.type === 'spotify' && p.data) {
-            musicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
             if (p.data.title) {
               hasSpotifyTrack = true;
               document.getElementById('djDeckTrack').textContent = p.data.title;
@@ -8577,7 +8577,7 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
   let sigEdgeRaf = 0;
   let sigEdgeCanvas = null;
   let sigEdgeMode = '';
-  let djMusicPlaying = true;
+  let djMusicPlaying = false;
   let djLastTrackTitle = '';
   let djStanceIdx = 0;
   let djLiveAudioLevel = 0;
@@ -8708,12 +8708,13 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
           moteCol = Math.random() < 0.5 ? '#a855f7' : '#38bdf8';
         } else if (m === 'dj-sona') {
           const freshAudio = (now - djLiveAudioAt) < 700;
+          const activeAudio = freshAudio ? djLiveAudioLevel > 0.015 : djMusicPlaying;
           const si = djStanceIdx % 3;
           const colA = sonaCols[si], colB = sonaCols[(si + 1) % 3];
           const beatAmp = freshAudio
-            ? (1.2 + djLiveAudioLevel * 10.5)
-            : (djMusicPlaying ? (2.2 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.0) : 0.6);
-          const speedMul = (!freshAudio && !djMusicPlaying) ? 0.35 : 1.15;
+            ? (djLiveAudioLevel < 0.015 ? 0 : (1.2 + djLiveAudioLevel * 10.5))
+            : (djMusicPlaying ? (2.2 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.0) : 0);
+          const speedMul = activeAudio ? 1.15 : 0.22;
           head = drawBatchedRibbon(ctx, poly, ph * speedMul, 0.30, colA, colB, 2.6, beatAmp, 24, now);
           drawBatchedRibbon(ctx, poly, ph * speedMul + 0.5, 0.28, colB, colA, 2.2, beatAmp * 0.85, 22, now);
           moteCol = colA;
@@ -8802,7 +8803,7 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
           const p = JSON.parse(ev.data);
           if (p.type === 'champion-theme') applyChampPack(p.data);
           else if (p.type === 'spotify' && p.data) {
-            djMusicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+            djMusicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
             const ttl = String(p.data.title || '');
             if (ttl && djLastTrackTitle && ttl !== djLastTrackTitle) djStanceIdx = (djStanceIdx + 1) % 3;
             if (ttl) djLastTrackTitle = ttl;
