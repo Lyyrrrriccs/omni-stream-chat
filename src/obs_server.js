@@ -4514,22 +4514,23 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
     body.champ-fx-dj-sona .ab-fx-sona { display: flex; }
     .ab-eq-strip {
       position: absolute;
-      left: 20%;
-      right: 30%;
-      top: 4%;
-      height: 14%;
+      left: 19%;
+      right: 29%;
+      top: 0%;
+      height: 25%;
       display: none;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 3px;
+      gap: 4px;
       pointer-events: none;
-      z-index: 4;
+      z-index: 6;
     }
     .ab-eq-bar {
       flex: 1;
-      border-radius: 2px 2px 0 0;
-      background: linear-gradient(180deg, var(--ab-s), var(--ab-p));
-      box-shadow: 0 0 8px var(--ab-p);
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, #ffffff 0%, var(--ab-s) 24%, var(--ab-p) 100%);
+      border-top: 2px solid #ffffff;
+      box-shadow: 0 0 12px var(--ab-p), 0 0 6px var(--ab-s);
       animation: abEqBounce 0.9s ease-in-out infinite alternate;
     }
 
@@ -4849,16 +4850,16 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
         for (let i = 0; i < bars.length; i++) {
           let h = 8;
           if (bands) {
-            h = Math.max(8, Math.min(100, Math.round(bands[i] * 100)));
+            h = bands[i] < 0.015 ? 8 : Math.max(16, Math.min(100, Math.round(bands[i] * 125)));
           } else if (fresh && typeof liveEq.level === 'number') {
             const side = i < 9 ? (liveEq.left ?? obsLv) : (liveEq.right ?? obsLv);
-            const curve = 0.48 + 0.52 * Math.sin((i / 17) * Math.PI);
-            const ripple = 0.35 + 0.65 * Math.abs(Math.sin(now * 0.011 + i * 0.72) * Math.cos(now * 0.006 - i * 0.31));
-            const punch = Math.min(1, side * curve * ripple * 1.15 + delta * 1.8);
-            h = side < 0.015 ? 8 : Math.max(8, Math.min(100, Math.round(8 + punch * 92)));
+            const curve = 0.52 + 0.48 * Math.sin((i / 17) * Math.PI);
+            const ripple = 0.38 + 0.62 * Math.abs(Math.sin(now * 0.011 + i * 0.72) * Math.cos(now * 0.006 - i * 0.31));
+            const punch = Math.min(1, side * curve * ripple * 1.45 + delta * 2.2);
+            h = side < 0.015 ? 8 : Math.max(16, Math.min(100, Math.round(14 + punch * 86)));
           } else if (musicPlaying) {
             const synth = Math.abs(Math.sin(now * 0.006 + i * 0.52) * Math.cos(now * 0.0032 - i * 0.27));
-            h = Math.round(16 + synth * 78);
+            h = Math.round(20 + synth * 80);
           } else {
             h = 8;
           }
