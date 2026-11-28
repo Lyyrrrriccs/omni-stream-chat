@@ -4825,37 +4825,56 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
         for (let i = 0; i < 18; i++) {
           const b = document.createElement('div');
           b.className = 'ab-eq-bar';
-          b.style.animationDuration = (0.45 + ((i * 19) % 7) * 0.11).toFixed(2) + 's';
-          b.style.animationDelay = ((i % 5) * 0.08).toFixed(2) + 's';
+          b.style.animation = 'none';
+          b.style.transition = 'height 0.06s linear, opacity 0.12s ease';
+          b.style.height = '12%';
           eqEl.appendChild(b);
         }
       }
 
-      function applyThemeBadge(t) {
-        if (!t || !t.id || t.id === 'none') {
-          if (iconEl) iconEl.textContent = '⚔️';
-          if (textEl) textEl.textContent = 'HEXTECH HUD';
-          return;
+      let musicPlaying = false;
+      let liveEq = null;
+      let liveEqAt = 0;
+
+      function tickAbEq(now) {
+        requestAnimationFrame(tickAbEq);
+        if (!eqEl || !document.body.classList.contains('champ-fx-dj-sona')) return;
+        const bars = eqEl.children;
+        const fresh = liveEq && (now - liveEqAt) < 700;
+        const bands = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+        for (let i = 0; i < bars.length; i++) {
+          let h = 8;
+          if (bands) {
+            h = Math.max(8, Math.min(100, Math.round(bands[i] * 100)));
+          } else if (fresh && typeof liveEq.level === 'number') {
+            const lv = liveEq.level;
+            const side = i < 9 ? (liveEq.left ?? lv) : (liveEq.right ?? lv);
+            const curve = 0.65 + 0.35 * Math.sin((i / 17) * Math.PI);
+            const ripple = 0.72 + 0.28 * Math.sin(now * 0.018 + i * 0.85);
+            h = side < 0.015 ? 8 : Math.max(8, Math.min(100, Math.round(8 + side * curve * ripple * 96)));
+          } else if (musicPlaying) {
+            const synth = Math.abs(Math.sin(now * 0.006 + i * 0.52) * Math.cos(now * 0.0032 - i * 0.27));
+            h = Math.round(16 + synth * 78);
+          } else {
+            h = 8;
+          }
+          bars[i].style.height = h + '%';
+          bars[i].style.opacity = (!fresh && !musicPlaying) ? '0.28' : '0.96';
         }
-        if (iconEl) iconEl.textContent = t.icon || '⚔️';
-        const shortName = String(t.name || 'CHAMPION HUD').split('—')[0].trim().toUpperCase();
-        if (textEl) textEl.textContent = shortName;
       }
+      requestAnimationFrame(tickAbEq);
 
-      function loadTheme() {
-        fetch('/api/champion-theme')
-          .then((r) => (r.ok ? r.json() : null))
-          .then((t) => { if (t) applyThemeBadge(t); })
-          .catch(() => {});
-      }
-
-      loadTheme();
       try {
         const ws = new WebSocket('ws://' + location.host);
         ws.onmessage = (ev) => {
           try {
             const p = JSON.parse(ev.data);
-            if (p.type === 'champion-theme') applyThemeBadge(p.data);
+            if (p.type === 'spotify' && p.data) {
+              musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+            } else if (p.type === 'audio-eq' && p.data) {
+              liveEq = p.data;
+              liveEqAt = performance.now();
+            }
           } catch (e) {}
         };
       } catch (e) {}
@@ -5342,6 +5361,482 @@ const OBS_TRON_TALK_HTML = `<!DOCTYPE html>
     fetchLatest();
     connectWs();
     setInterval(fetchLatest, 4000);
+  </script>
+</body>
+</html>`;
+
+const OBS_PRODUCT_LOWERTHIRD_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Produkt-Präsentation Bauchbinde</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; color: #f8fafc; overflow: hidden; }
+    .pr-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 24px 14px 28px;
+      background: linear-gradient(135deg, rgba(14, 18, 26, 0.94), rgba(22, 27, 38, 0.92));
+      border: 1px solid rgba(212, 175, 55, 0.42);
+      border-left: 5px solid #d4af37;
+      border-radius: 10px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+    .pr-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+    .pr-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #e2c779; }
+    .pr-dot { width: 7px; height: 7px; border-radius: 50%; background: #d4af37; box-shadow: 0 0 10px #d4af37; }
+    .pr-badges { display: flex; gap: 8px; align-items: center; }
+    .pr-pill { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; padding: 4px 11px; border-radius: 999px; background: rgba(212, 175, 55, 0.14); border: 1px solid rgba(212, 175, 55, 0.52); color: #f5e6b3; white-space: nowrap; }
+    .pr-pill.url { background: rgba(248, 250, 252, 0.08); border-color: rgba(248, 250, 252, 0.22); color: #e2e8f0; }
+    .pr-main { display: flex; align-items: baseline; gap: 14px; margin: 4px 0; min-width: 0; }
+    .pr-title { font-family: Georgia, "Times New Roman", serif; font-size: 27px; font-weight: 700; letter-spacing: 0.01em; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pr-tag { font-size: 14px; font-weight: 400; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pr-bottom { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.10); font-size: 12px; color: #94a3b8; }
+    .pr-step { font-weight: 700; color: #e2c779; white-space: nowrap; }
+    .pr-ticker { flex: 1; text-align: right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: 0.03em; }
+  </style>
+</head>
+<body>
+  <div class="pr-wrap">
+    <div class="pr-top">
+      <div class="pr-eyebrow"><span class="pr-dot"></span><span>KEYNOTE SHOWCASE</span></div>
+      <div class="pr-badges">
+        <span class="pr-pill" id="prPrice">AB 299 € • NEU</span>
+        <span class="pr-pill url" id="prUrl">shop.beispiel.de/launch</span>
+      </div>
+    </div>
+    <div class="pr-main">
+      <div class="pr-title" id="prTitle">Studio Pro Series X</div>
+      <div class="pr-tag" id="prTag">Präzision, Design &amp; Leistung — Live Keynote</div>
+    </div>
+    <div class="pr-bottom">
+      <div class="pr-step" id="prStep">01 / 04 • Willkommen &amp; Vision</div>
+      <div class="pr-ticker" id="prTicker">KEYNOTE LIVE • Fragen gerne im Chat</div>
+    </div>
+  </div>
+  <script>
+    function renderProd(d) {
+      if (!d) return;
+      document.getElementById('prTitle').textContent = d.prodName || 'Studio Pro Series X';
+      document.getElementById('prTag').textContent = d.prodTagline || '';
+      const pEl = document.getElementById('prPrice');
+      pEl.textContent = d.prodPriceBadge || '';
+      pEl.style.display = d.prodPriceBadge ? 'inline-flex' : 'none';
+      const uEl = document.getElementById('prUrl');
+      uEl.textContent = d.prodPromoUrl || '';
+      uEl.style.display = d.prodPromoUrl ? 'inline-flex' : 'none';
+      document.getElementById('prTicker').textContent = d.prodTickerText || '';
+      const items = Array.isArray(d.prodAgendaItems) ? d.prodAgendaItems : [];
+      const idx = Math.min(Math.max(0, Number(d.prodActiveAgendaIdx || 0)), Math.max(0, items.length - 1));
+      const num = String(idx + 1).padStart(2, '0') + ' / ' + String(Math.max(1, items.length)).padStart(2, '0');
+      document.getElementById('prStep').textContent = items.length ? (num + ' • ' + items[idx]) : 'LIVE PRÄSENTATION';
+    }
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(renderProd).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => { try { const p = JSON.parse(ev.data); if (p.type === 'game-stats') renderProd(p.data); } catch (e) {} };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_PRODUCT_CARD_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Produkt-Spotlight-Karte</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; color: #f8fafc; overflow: hidden; }
+    .pc-card {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 22px 24px;
+      background: linear-gradient(155deg, rgba(14, 18, 26, 0.95), rgba(22, 28, 40, 0.93));
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-top: 4px solid #d4af37;
+      border-radius: 14px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.58), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+    .pc-card.hidden { opacity: 0; transform: translateY(14px); pointer-events: none; }
+    .pc-kicker { font-size: 10.5px; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase; color: #e2c779; }
+    .pc-title { font-family: Georgia, "Times New Roman", serif; font-size: 26px; font-weight: 700; color: #ffffff; margin-top: 5px; line-height: 1.15; }
+    .pc-sub { font-size: 13px; color: #cbd5e1; margin-top: 4px; }
+    .pc-list { list-style: none; display: flex; flex-direction: column; gap: 9px; margin: 14px 0; }
+    .pc-list li { display: flex; align-items: flex-start; gap: 10px; font-size: 13.5px; color: #f1f5f9; line-height: 1.3; }
+    .pc-check { width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0; background: rgba(212, 175, 55, 0.18); border: 1px solid #d4af37; color: #f5e6b3; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 900; margin-top: 1px; }
+    .pc-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, 0.10); }
+    .pc-price { font-size: 14px; font-weight: 800; color: #0f172a; background: linear-gradient(90deg, #e2c779, #d4af37); padding: 6px 14px; border-radius: 999px; letter-spacing: 0.04em; }
+    .pc-url { font-size: 12px; font-weight: 600; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <div class="pc-card" id="pcCard">
+    <div>
+      <div class="pc-kicker">PRODUKT-HIGHLIGHTS</div>
+      <div class="pc-title" id="pcTitle">Studio Pro Series X</div>
+      <div class="pc-sub" id="pcSub">Präzision, Design &amp; Leistung — Live Keynote</div>
+      <ul class="pc-list" id="pcList"></ul>
+    </div>
+    <div class="pc-foot">
+      <div class="pc-price" id="pcPrice">AB 299 € • NEU</div>
+      <div class="pc-url" id="pcUrl">shop.beispiel.de/launch</div>
+    </div>
+  </div>
+  <script>
+    function renderCard(d) {
+      if (!d) return;
+      const card = document.getElementById('pcCard');
+      card.classList.toggle('hidden', d.prodShowCard === false);
+      document.getElementById('pcTitle').textContent = d.prodName || 'Studio Pro Series X';
+      document.getElementById('pcSub').textContent = d.prodTagline || '';
+      document.getElementById('pcPrice').textContent = d.prodPriceBadge || 'LIVE';
+      document.getElementById('pcUrl').textContent = d.prodPromoUrl || '';
+      const list = document.getElementById('pcList');
+      list.innerHTML = '';
+      const hl = Array.isArray(d.prodHighlights) && d.prodHighlights.length ? d.prodHighlights : ['Premium Verarbeitung', 'Sofort einsatzbereit'];
+      hl.forEach((txt) => {
+        const li = document.createElement('li');
+        const ic = document.createElement('span');
+        ic.className = 'pc-check';
+        ic.textContent = '✓';
+        const sp = document.createElement('span');
+        sp.textContent = txt;
+        li.appendChild(ic);
+        li.appendChild(sp);
+        list.appendChild(li);
+      });
+    }
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(renderCard).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => { try { const p = JSON.parse(ev.data); if (p.type === 'game-stats') renderCard(p.data); } catch (e) {} };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — DJ Stream 36-Band Audio-EQ Bühne</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f8fafc; overflow: hidden; }
+    .dj-stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      --dj-p: #00e5ff;
+      --dj-s: #ff2a6d;
+      --dj-t: #c084fc;
+      --dj-bg: rgba(7, 10, 22, 0.88);
+    }
+    .dj-stage.scheme-sunset_house { --dj-p: #ff5e3a; --dj-s: #fbbf24; --dj-t: #ec4899; --dj-bg: rgba(20, 8, 16, 0.88); }
+    .dj-stage.scheme-techno_mono { --dj-p: #f8fafc; --dj-s: #ef4444; --dj-t: #94a3b8; --dj-bg: rgba(8, 8, 10, 0.92); }
+    .dj-stage.scheme-acid_rave { --dj-p: #a3e635; --dj-s: #a855f7; --dj-t: #22d3ee; --dj-bg: rgba(8, 14, 16, 0.90); }
+    .dj-stage.scheme-ibiza_gold { --dj-p: #f5c542; --dj-s: #2dd4bf; --dj-t: #fde68a; --dj-bg: rgba(8, 16, 28, 0.88); }
+    #djEqCanvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .dj-hud {
+      position: absolute;
+      left: 28px;
+      right: 28px;
+      bottom: 14px;
+      height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 0 20px;
+      background: var(--dj-bg);
+      border: 1.5px solid var(--dj-p);
+      border-radius: 12px;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--dj-p) 42%, transparent), inset 0 0 18px color-mix(in srgb, var(--dj-s) 20%, transparent);
+    }
+    .dj-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .dj-name { font-size: 18px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; color: #ffffff; text-shadow: 0 0 12px var(--dj-p); white-space: nowrap; }
+    .dj-set { font-size: 13px; font-weight: 600; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dj-right { display: flex; align-items: center; gap: 10px; }
+    .dj-pill { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--dj-s); background: color-mix(in srgb, var(--dj-s) 18%, transparent); color: #ffffff; white-space: nowrap; }
+    .dj-pill.bpm { border-color: var(--dj-p); background: color-mix(in srgb, var(--dj-p) 18%, transparent); }
+    .dj-ticker { font-size: 12px; color: #e2e8f0; max-width: 440px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <div class="dj-stage scheme-cyber_club" id="djStage">
+    <canvas id="djEqCanvas"></canvas>
+    <div class="dj-hud">
+      <div class="dj-left">
+        <div class="dj-name" id="djName">DJ LIVE SET</div>
+        <div class="dj-set" id="djSet">Midnight Club Session Vol. 1</div>
+      </div>
+      <div class="dj-ticker" id="djTicker">LIVE IN THE MIX</div>
+      <div class="dj-right">
+        <span class="dj-pill" id="djGenre">MELODIC TECHNO</span>
+        <span class="dj-pill bpm" id="djBpm">128 BPM</span>
+      </div>
+    </div>
+  </div>
+  <script>
+    const stageEl = document.getElementById('djStage');
+    const canvas = document.getElementById('djEqCanvas');
+    const ctx = canvas.getContext('2d');
+    const SCHEMES = {
+      cyber_club: ['#00e5ff', '#ff2a6d', '#c084fc'],
+      sunset_house: ['#ff5e3a', '#fbbf24', '#ec4899'],
+      techno_mono: ['#f8fafc', '#ef4444', '#94a3b8'],
+      acid_rave: ['#a3e635', '#a855f7', '#22d3ee'],
+      ibiza_gold: ['#f5c542', '#2dd4bf', '#fde68a']
+    };
+    let curScheme = 'cyber_club';
+    let bpm = 128;
+    let musicPlaying = false;
+    let liveEq = null;
+    let liveEqAt = 0;
+    const smoothBars = new Float32Array(36);
+
+    function applyDjState(d) {
+      if (!d) return;
+      curScheme = SCHEMES[d.djColorScheme] ? d.djColorScheme : 'cyber_club';
+      stageEl.className = 'dj-stage scheme-' + curScheme;
+      document.getElementById('djName').textContent = d.djName || 'DJ LIVE SET';
+      document.getElementById('djSet').textContent = d.djSetTitle || '';
+      document.getElementById('djGenre').textContent = d.djGenre || 'CLUB MIX';
+      bpm = Math.max(60, Math.min(220, Number(d.djBpm || 128)));
+      document.getElementById('djBpm').textContent = bpm + ' BPM';
+      if (d.djTickerText) document.getElementById('djTicker').textContent = d.djTickerText;
+    }
+
+    function tick(now) {
+      requestAnimationFrame(tick);
+      const w = window.innerWidth, h = window.innerHeight;
+      if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+      ctx.clearRect(0, 0, w, h);
+      const cols = SCHEMES[curScheme] || SCHEMES.cyber_club;
+      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+      const beatPhase = (now / 1000) * (bpm / 60) * Math.PI * 2;
+      const beatPulse = Math.pow(Math.max(0, Math.sin(beatPhase * 0.5)), 4);
+
+      const barCount = 36;
+      const padX = 32;
+      const usableW = w - padX * 2;
+      const gap = 8;
+      const barW = Math.max(6, (usableW - gap * (barCount - 1)) / barCount);
+      const baseY = h - 78;
+      const maxBarH = Math.max(40, h - 92);
+
+      let avgEnergy = 0;
+      for (let i = 0; i < barCount; i++) {
+        const distMid = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2);
+        const bandIdx = Math.min(17, Math.floor(distMid * 17));
+        let target = 0.08;
+        if (fft) {
+          target = Math.max(0.06, fft[bandIdx]);
+        } else if (fresh && typeof liveEq.level === 'number') {
+          const side = i < barCount / 2 ? (liveEq.left ?? liveEq.level) : (liveEq.right ?? liveEq.level);
+          const shape = (1 - distMid * 0.45) * (0.68 + 0.32 * Math.sin(now * 0.015 + i * 0.7));
+          target = Math.max(0.06, Math.min(1, side * shape * 1.15));
+        } else if (musicPlaying) {
+          const wave = Math.abs(Math.sin(now * 0.005 + i * 0.45) * Math.cos(now * 0.0028 - i * 0.22));
+          target = 0.14 + wave * (0.55 + beatPulse * 0.35) * (1 - distMid * 0.35);
+        }
+        smoothBars[i] += (target - smoothBars[i]) * 0.28;
+        avgEnergy += smoothBars[i];
+      }
+      avgEnergy /= barCount;
+
+      // Pulsing bass glow along bottom floor
+      const gradFloor = ctx.createLinearGradient(0, baseY - 40, 0, baseY + 12);
+      gradFloor.addColorStop(0, 'rgba(0,0,0,0)');
+      gradFloor.addColorStop(1, cols[0]);
+      ctx.globalAlpha = 0.16 + avgEnergy * 0.42;
+      ctx.fillStyle = gradFloor;
+      ctx.fillRect(padX, baseY - 40, usableW, 52);
+
+      const barGrad = ctx.createLinearGradient(0, baseY, 0, baseY - maxBarH);
+      barGrad.addColorStop(0, cols[0]);
+      barGrad.addColorStop(0.58, cols[1]);
+      barGrad.addColorStop(1, cols[2]);
+      ctx.globalAlpha = 0.94;
+      ctx.fillStyle = barGrad;
+
+      for (let i = 0; i < barCount; i++) {
+        const bh = Math.max(4, smoothBars[i] * maxBarH);
+        const x = padX + i * (barW + gap);
+        ctx.fillRect(x, baseY - bh, barW, bh);
+        // Peak cap
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(x, baseY - bh - 4, barW, 2.5);
+        ctx.fillStyle = barGrad;
+      }
+      ctx.globalAlpha = 1;
+    }
+    requestAnimationFrame(tick);
+
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyDjState).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyDjState(p.data);
+          else if (p.type === 'spotify' && p.data) {
+            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+            if (p.data.title) {
+              document.getElementById('djTicker').textContent = '🎵 ' + p.data.title + (p.data.artist ? ' — ' + p.data.artist : '');
+            }
+          } else if (p.type === 'audio-eq' && p.data) {
+            liveEq = p.data;
+            liveEqAt = performance.now();
+          }
+        } catch (e) {}
+      };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — DJ Stream Vinyl &amp; BPM Deck</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f8fafc; overflow: hidden; }
+    .dj-deck {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      --dj-p: #00e5ff;
+      --dj-s: #ff2a6d;
+      --dj-t: #c084fc;
+      background: linear-gradient(135deg, rgba(8, 11, 24, 0.94), rgba(16, 10, 28, 0.94));
+      border: 2px solid var(--dj-p);
+      border-radius: 16px;
+      box-shadow: 0 0 24px color-mix(in srgb, var(--dj-p) 45%, transparent);
+    }
+    .dj-deck.scheme-sunset_house { --dj-p: #ff5e3a; --dj-s: #fbbf24; --dj-t: #ec4899; }
+    .dj-deck.scheme-techno_mono { --dj-p: #f8fafc; --dj-s: #ef4444; --dj-t: #94a3b8; }
+    .dj-deck.scheme-acid_rave { --dj-p: #a3e635; --dj-s: #a855f7; --dj-t: #22d3ee; }
+    .dj-deck.scheme-ibiza_gold { --dj-p: #f5c542; --dj-s: #2dd4bf; --dj-t: #fde68a; }
+    .dj-vinyl {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: radial-gradient(circle, var(--dj-s) 0 18%, #090d16 19% 25%, #161e2e 26% 30%, #090d16 31% 52%, #1e293b 53% 56%, #090d16 57% 100%);
+      border: 2.5px solid var(--dj-p);
+      box-shadow: 0 0 18px color-mix(in srgb, var(--dj-p) 65%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: djSpin 3.2s linear infinite;
+    }
+    .dj-vinyl.paused { animation-play-state: paused; }
+    .dj-vinyl-dot { width: 14px; height: 14px; border-radius: 50%; background: #ffffff; box-shadow: 0 0 8px var(--dj-p); }
+    @keyframes djSpin { to { transform: rotate(360deg); } }
+    .dj-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+    .dj-top-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .dj-kicker { font-size: 10.5px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--dj-p); }
+    .dj-bpm-tag { font-size: 11px; font-weight: 900; padding: 2px 9px; border-radius: 999px; background: color-mix(in srgb, var(--dj-s) 22%, transparent); border: 1px solid var(--dj-s); color: #ffffff; }
+    .dj-track { font-size: 18px; font-weight: 900; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dj-artist { font-size: 12.5px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dj-mini-eq { display: flex; align-items: flex-end; gap: 4px; height: 22px; margin-top: 3px; }
+    .dj-mini-bar { flex: 1; border-radius: 2px 2px 0 0; background: linear-gradient(180deg, var(--dj-s), var(--dj-p)); height: 20%; transition: height 0.06s linear; }
+  </style>
+</head>
+<body>
+  <div class="dj-deck scheme-cyber_club" id="djDeck">
+    <div class="dj-vinyl" id="djVinyl"><div class="dj-vinyl-dot"></div></div>
+    <div class="dj-info">
+      <div class="dj-top-row">
+        <span class="dj-kicker" id="djDeckGenre">MELODIC TECHNO</span>
+        <span class="dj-bpm-tag" id="djDeckBpm">128 BPM</span>
+      </div>
+      <div class="dj-track" id="djDeckTrack">Midnight Club Session Vol. 1</div>
+      <div class="dj-artist" id="djDeckArtist">DJ LIVE SET</div>
+      <div class="dj-mini-eq" id="djMiniEq"></div>
+    </div>
+  </div>
+  <script>
+    const deck = document.getElementById('djDeck');
+    const vinyl = document.getElementById('djVinyl');
+    const miniEq = document.getElementById('djMiniEq');
+    for (let i = 0; i < 14; i++) {
+      const b = document.createElement('div');
+      b.className = 'dj-mini-bar';
+      miniEq.appendChild(b);
+    }
+    let hasSpotifyTrack = false;
+    let musicPlaying = false;
+    let liveEq = null;
+    let liveEqAt = 0;
+
+    function applyDeck(d) {
+      if (!d) return;
+      deck.className = 'dj-deck scheme-' + (d.djColorScheme || 'cyber_club');
+      document.getElementById('djDeckGenre').textContent = d.djGenre || 'CLUB MIX';
+      const bpm = Math.max(60, Math.min(220, Number(d.djBpm || 128)));
+      document.getElementById('djDeckBpm').textContent = bpm + ' BPM';
+      vinyl.style.animationDuration = (60 / bpm * 4).toFixed(2) + 's';
+      if (!hasSpotifyTrack) {
+        document.getElementById('djDeckTrack').textContent = d.djSetTitle || 'LIVE SET';
+        document.getElementById('djDeckArtist').textContent = d.djName || 'DJ LIVE SET';
+      }
+    }
+
+    function tickMini(now) {
+      requestAnimationFrame(tickMini);
+      const bars = miniEq.children;
+      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 14 ? liveEq.bands : null;
+      vinyl.classList.toggle('paused', !fresh && !musicPlaying);
+      for (let i = 0; i < bars.length; i++) {
+        let h = 14;
+        if (fft) h = Math.max(12, Math.min(100, Math.round(fft[i] * 100)));
+        else if (fresh && typeof liveEq.level === 'number') h = Math.max(12, Math.min(100, Math.round(14 + liveEq.level * (0.65 + 0.35 * Math.sin(now * 0.02 + i)) * 92)));
+        else if (musicPlaying) h = Math.round(18 + Math.abs(Math.sin(now * 0.006 + i * 0.55)) * 74);
+        bars[i].style.height = h + '%';
+      }
+    }
+    requestAnimationFrame(tickMini);
+
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyDeck).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyDeck(p.data);
+          else if (p.type === 'spotify' && p.data) {
+            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+            if (p.data.title) {
+              hasSpotifyTrack = true;
+              document.getElementById('djDeckTrack').textContent = p.data.title;
+              document.getElementById('djDeckArtist').textContent = p.data.artist || '';
+            }
+          } else if (p.type === 'audio-eq' && p.data) {
+            liveEq = p.data;
+            liveEqAt = performance.now();
+          }
+        } catch (e) {}
+      };
+    } catch (e) {}
   </script>
 </body>
 </html>`;
@@ -8082,6 +8577,11 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
   let sigEdgeRaf = 0;
   let sigEdgeCanvas = null;
   let sigEdgeMode = '';
+  let djMusicPlaying = false;
+  let djLastTrackTitle = '';
+  let djStanceIdx = 0;
+  let djLiveAudioLevel = 0;
+  let djLiveAudioAt = 0;
   function drawBatchedRibbon(ctx, poly, uHead, uLen, col1, col2, width, waveAmp, waveFreq, now) {
     const steps = 16;
     const pts = [];
@@ -8207,11 +8707,16 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
           drawBatchedRibbon(ctx, poly, -ph * 0.85 + 0.5, 0.18, '#a855f7', '#38bdf8', 2.2, 4.0, 12, now);
           moteCol = Math.random() < 0.5 ? '#a855f7' : '#38bdf8';
         } else if (m === 'dj-sona') {
-          const si = Math.floor(now / 2200) % 3;
+          const freshAudio = (now - djLiveAudioAt) < 700;
+          const activeAudio = freshAudio ? djLiveAudioLevel > 0.015 : djMusicPlaying;
+          const si = djStanceIdx % 3;
           const colA = sonaCols[si], colB = sonaCols[(si + 1) % 3];
-          const beatAmp = 2.5 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.5;
-          head = drawBatchedRibbon(ctx, poly, ph * 1.15, 0.30, colA, colB, 2.6, beatAmp, 24, now);
-          drawBatchedRibbon(ctx, poly, ph * 1.15 + 0.5, 0.28, colB, colA, 2.2, beatAmp * 0.85, 22, now);
+          const beatAmp = freshAudio
+            ? (djLiveAudioLevel < 0.015 ? 0 : (1.2 + djLiveAudioLevel * 10.5))
+            : (djMusicPlaying ? (2.2 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.0) : 0);
+          const speedMul = activeAudio ? 1.15 : 0.22;
+          head = drawBatchedRibbon(ctx, poly, ph * speedMul, 0.30, colA, colB, 2.6, beatAmp, 24, now);
+          drawBatchedRibbon(ctx, poly, ph * speedMul + 0.5, 0.28, colB, colA, 2.2, beatAmp * 0.85, 22, now);
           moteCol = colA;
         } else if (m === 'eve-firestarter') {
           head = drawBatchedRibbon(ctx, poly, ph * 1.05, 0.26, '#ff1e6b', '#a855f7', 2.8, 5.2, 14, now);
@@ -8294,7 +8799,19 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
     try {
       const ws = new WebSocket('ws://' + location.host);
       ws.onmessage = (ev) => {
-        try { const p = JSON.parse(ev.data); if (p.type === 'champion-theme') applyChampPack(p.data); } catch (e) {}
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'champion-theme') applyChampPack(p.data);
+          else if (p.type === 'spotify' && p.data) {
+            djMusicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+            const ttl = String(p.data.title || '');
+            if (ttl && djLastTrackTitle && ttl !== djLastTrackTitle) djStanceIdx = (djStanceIdx + 1) % 3;
+            if (ttl) djLastTrackTitle = ttl;
+          } else if (p.type === 'audio-eq' && p.data) {
+            djLiveAudioLevel = Math.max(0, Math.min(1, Number(p.data.level) || 0));
+            djLiveAudioAt = performance.now();
+          }
+        } catch (e) {}
       };
       ws.onclose = () => setTimeout(connectThemeWs, 2500);
     } catch (e) {}
@@ -8716,6 +9233,14 @@ class ObsServer {
           res.end(OBS_JC_QNA_HTML);
         } else if (urlPath === '/tron-talk') {
           res.end(OBS_TRON_TALK_HTML);
+        } else if (urlPath === '/product-lowerthird') {
+          res.end(OBS_PRODUCT_LOWERTHIRD_HTML);
+        } else if (urlPath === '/product-card') {
+          res.end(OBS_PRODUCT_CARD_HTML);
+        } else if (urlPath === '/dj-stage') {
+          res.end(OBS_DJ_STAGE_HTML);
+        } else if (urlPath === '/dj-nowplaying') {
+          res.end(OBS_DJ_NOWPLAYING_HTML);
         } else if (urlPath === '/val-bar') {
           res.end(OBS_VAL_BAR_HTML);
         } else if (urlPath === '/val-map') {
@@ -8803,6 +9328,10 @@ class ObsServer {
   broadcastSpotify(track) {
     this.currentSpotify = track;
     this._broadcast({ type: 'spotify', data: track });
+  }
+
+  broadcastAudioEq(payload) {
+    this._broadcast({ type: 'audio-eq', data: payload });
   }
 
   broadcastAppearance(appearance) {

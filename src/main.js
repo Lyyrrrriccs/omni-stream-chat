@@ -475,6 +475,10 @@ function getBuiltinObsOverlays(port = 4588) {
     { id: 'jc-lowerthird', label: '🎙️ Just Chatting Bauchbinde (Thema & Ticker)', inputName: 'OmniGrid JC Bauchbinde', url: `${base}/jc-lowerthird`, width: 920, height: 145, posX: 500, posY: 910 },
     { id: 'jc-qna', label: '❓ Just Chatting Viewer Q&A Spotlight', inputName: 'OmniGrid JC Q&A', url: `${base}/jc-qna`, width: 640, height: 220, posX: 640, posY: 665 },
     { id: 'tron-talk', label: '💠 TRON Tech Talk & GameDev Bauchbinde', inputName: 'OmniGrid TRON Tech-Talk', url: `${base}/tron-talk`, width: 980, height: 170, posX: 470, posY: 890 },
+    { id: 'product-lowerthird', label: '🎯 Produkt-Präsentation Keynote-Bauchbinde (Klassisch Modern)', inputName: 'OmniGrid Produkt Bauchbinde', url: `${base}/product-lowerthird`, width: 980, height: 150, posX: 470, posY: 905 },
+    { id: 'product-card', label: '🏷️ Produkt-Spotlight-Karte (Features & Preis)', inputName: 'OmniGrid Produkt Karte', url: `${base}/product-card`, width: 480, height: 340, posX: 1410, posY: 320 },
+    { id: 'dj-stage', label: '🎧 DJ Stream 36-Band Audio-EQ Bühne (Multi-Color)', inputName: 'OmniGrid DJ Stage EQ', url: `${base}/dj-stage`, width: 1920, height: 220, posX: 0, posY: 860 },
+    { id: 'dj-nowplaying', label: '💿 DJ Stream Vinyl & BPM Deck (Audio-Reaktiv)', inputName: 'OmniGrid DJ Deck', url: `${base}/dj-nowplaying`, width: 520, height: 145, posX: 32, posY: 32 },
     { id: 'val-bar', label: '🔫 Valorant Rank, RR & Match-Bar', inputName: 'OmniGrid Valorant Bar', url: `${base}/val-bar`, width: 560, height: 125, posX: 680, posY: 940 },
     { id: 'val-map', label: '🛡️ Valorant Radar-Cover (Anti-Snipe oben links)', inputName: 'OmniGrid Valorant Radar', url: `${base}/val-map`, width: 310, height: 310, posX: 16, posY: 16 },
     { id: 'goals', label: '🎯 Stream-Goals (Follower / Subs / Spenden)', inputName: 'OmniGrid Goals', url: `${base}/goals`, width: 460, height: 220, posX: 24, posY: 175 },
@@ -2135,6 +2139,22 @@ function triggerTransitionRule(rule) {
   }
   obsServer.broadcastSceneTransition({ mode: 'theme' });
 }
+
+let lastAudioEqBroadcastAt = 0;
+obsWs.on('audio-meter', (meter) => {
+  const activePack = obsServer.getEffectiveChampionTheme?.();
+  const activeAddon = obsServer.currentGameStats?.addonId;
+  if ((!activePack || activePack.effect !== 'dj-sona') && activeAddon !== 'djstream') return;
+  const now = Date.now();
+  if (now - lastAudioEqBroadcastAt < 33) return;
+  lastAudioEqBroadcastAt = now;
+  obsServer.broadcastAudioEq({ source: 'obs', level: meter.level, left: meter.left, right: meter.right, ts: now });
+});
+
+ipcMain.on('audio-eq-frame', (_ev, payload) => {
+  if (!payload) return;
+  obsServer.broadcastAudioEq({ ...payload, source: 'fft', ts: Date.now() });
+});
 
 let tempPreviewTransitionPath = '';
 let lastObsConnectedState = false;
@@ -3915,6 +3935,18 @@ app.whenReady().then(async () => {
             gameName: 'Valorant',
             chatTheme: 'valorant',
             ids: ['game-stats', 'val-bar', 'val-map', 'alerts', 'chat']
+          },
+          productlaunch: {
+            addonMode: 'productlaunch',
+            gameName: 'Product Presentation',
+            chatTheme: 'minimal',
+            ids: ['product-lowerthird', 'product-card', 'jc-qna', 'chat']
+          },
+          djstream: {
+            addonMode: 'djstream',
+            gameName: 'DJ Live Set',
+            chatTheme: 'neon',
+            ids: ['dj-stage', 'dj-nowplaying', 'alerts', 'chat']
           }
         };
         const bundle = bundleMap[payload.bundleId];

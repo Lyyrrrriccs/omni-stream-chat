@@ -161,5 +161,6 @@ contextBridge.exposeInMainWorld('omnichat', {
   themesInstallFile: () => ipcRenderer.invoke('themes-install-file'),
   themesExportPack: (packId) => ipcRenderer.invoke('themes-export-pack', packId),
   themesOpenDir: () => ipcRenderer.invoke('themes-open-dir'),
-  themesCheckUpdates: () => ipcRenderer.invoke('themes-check-updates')
+  themesCheckUpdates: () => ipcRenderer.invoke('themes-check-updates'),
+  sendAudioEqFrame: (payload) => ipcRenderer.send('audio-eq-frame', payload)
 });

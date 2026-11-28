@@ -59,6 +59,25 @@ const DEFAULT_GAME_ADDONS_CONFIG = {
       activeAgendaIdx: 0,
       tickerText: 'GRID ONLINE // !thema • !stack • !repo • !agenda • !bug+ • !commit+'
     },
+    productlaunch: {
+      productName: 'Studio Pro Series X',
+      tagline: 'Präzision, Design & Leistung — Live Keynote',
+      priceBadge: 'AB 299 € • NEU',
+      promoUrl: 'shop.beispiel.de/launch',
+      tickerText: 'KEYNOTE LIVE • Fragen gerne im Chat (!ask) • Launch-Angebot aktiv',
+      highlightsText: 'Ultraleichtes Unibody-Aluminiumgehäuse\nBis zu 24 Stunden Akkulaufzeit\nSofort verfügbar mit 3 Jahren Garantie',
+      agendaText: 'Willkommen & Vision\nDesign & Verarbeitung\nLive-Demo & Features\nPreise, Verfügbarkeit & Q&A',
+      activeAgendaIdx: 0,
+      showCard: true
+    },
+    djstream: {
+      djName: 'DJ LIVE SET',
+      setTitle: 'Midnight Club Session Vol. 1',
+      genre: 'Melodic Techno / House',
+      bpm: 128,
+      colorScheme: 'cyber_club',
+      tickerText: 'LIVE IN THE MIX • Trackwünsche im Chat • !track • !bpm • !genre'
+    },
     minecraft: { deaths: 0, diamonds: 0, days: 1, mode: 'Survival' },
     souls: { deaths: 0, bosses: 0, run: 'Any%', bossName: 'Aktueller Boss' },
     valorant: {
@@ -137,6 +156,38 @@ const GAME_ADDONS = [
     ],
     chatCommands: ['!thema', '!stack', '!repo', '!agenda', '!bug+', '!commit+', '!setthema', '!setphase', '!nextstep'],
     eventHint: 'TRON Legacy Suite: Neon-Grid Bauchbinde (/tron-talk), TRON HUD & Kapitel-Agenda (/game-stats), Live Bug/Commit-Counter & Dev Chat-Commands!'
+  },
+  {
+    id: 'productlaunch',
+    name: 'Produkt-Präsentation — Klassisch Modern',
+    icon: '🎯',
+    accent: '#d4af37',
+    gameMatches: ['product launch', 'keynote', 'showcase', 'presentation', 'unboxing', 'review', 'tech review'],
+    fields: [
+      { key: 'productName', label: '🎯 Produktname', type: 'text' },
+      { key: 'tagline', label: '✨ Untertitel / Claim', type: 'text' },
+      { key: 'priceBadge', label: '🏷️ Preis / Release-Badge', type: 'text' },
+      { key: 'promoUrl', label: '🔗 Link / Code', type: 'text' },
+      { key: 'tickerText', label: '📢 Info-Ticker', type: 'text' }
+    ],
+    chatCommands: ['!produkt', '!preis', '!link', '!agenda'],
+    eventHint: 'Klassisch-moderne Keynote-Suite: Elegante Bauchbinde (/product-lowerthird), Produkt-Spotlight-Karte (/product-card) & Kapitel-Stepper!'
+  },
+  {
+    id: 'djstream',
+    name: 'DJ Stream Suite — Multi-Color & Audio-EQ',
+    icon: '🎧',
+    accent: '#00e5ff',
+    gameMatches: ['music', 'djs', 'dj', 'electronic music', 'techno', 'house', 'club'],
+    fields: [
+      { key: 'djName', label: '🎧 DJ / Artist Name', type: 'text' },
+      { key: 'setTitle', label: '💿 Set-Titel', type: 'text' },
+      { key: 'genre', label: '🎵 Genre', type: 'text' },
+      { key: 'bpm', label: '⚡ BPM', type: 'number' },
+      { key: 'tickerText', label: '📢 Club-Ticker / Shoutout', type: 'text' }
+    ],
+    chatCommands: ['!track', '!bpm', '!genre', '!set'],
+    eventHint: 'DJ-Stream-Komplett-Set: 36-Band Live Audio-EQ Bühne (/dj-stage), Vinyl/BPM Deck (/dj-nowplaying), 5 Farbschemen & echte Audio-/OBS-Pegel-Kopplung!'
   },
   {
     id: 'cs2',
@@ -257,6 +308,8 @@ const EXTRA_STAT_KEYS = {
   ],
   justchatting: ['agendaText', 'activeAgendaIdx', 'qnaEnabled', 'activeQuestion', 'qnaQueue'],
   techtalk: ['agendaText', 'activeAgendaIdx', 'tickerText'],
+  productlaunch: ['highlightsText', 'agendaText', 'activeAgendaIdx', 'showCard'],
+  djstream: ['colorScheme'],
   valorant: ['mapCoverEnabled', 'mapCoverText']
 };
 
@@ -376,6 +429,8 @@ function buildObsGameStatsPayload(cfg = {}) {
   const lolStats = ga.perAddonStats?.lol || {};
   const jcStats = ga.perAddonStats?.justchatting || {};
   const ttStats = ga.perAddonStats?.techtalk || {};
+  const prodStats = ga.perAddonStats?.productlaunch || {};
+  const djStats = ga.perAddonStats?.djstream || {};
   const valStats = ga.perAddonStats?.valorant || {};
 
   const lolMatches = Array.isArray(lolStats.recentMatches) ? lolStats.recentMatches.slice(0, 6) : [];
@@ -413,6 +468,20 @@ function buildObsGameStatsPayload(cfg = {}) {
       { key: 'bugsFixed', label: 'BUGS FIXED', value: Number(stats.bugsFixed || 0) },
       { key: 'commits', label: 'COMMITS', value: Number(stats.commits || 0) },
       { key: 'step', label: 'SECTOR', value: agenda.length ? `${curStep + 1}/${agenda.length}` : '—' }
+    ];
+  } else if (addon.id === 'productlaunch') {
+    const agenda = parseAgendaItems(stats.agendaText);
+    const curStep = Math.min(Math.max(0, Number(stats.activeAgendaIdx || 0)), Math.max(0, agenda.length - 1));
+    displayStats = [
+      { key: 'price', label: 'ANGEBOT', value: stats.priceBadge || 'LIVE' },
+      { key: 'step', label: 'KAPITEL', value: agenda.length ? `${curStep + 1} / ${agenda.length}` : '—' },
+      { key: 'link', label: 'INFO', value: stats.promoUrl || 'Keynote' }
+    ];
+  } else if (addon.id === 'djstream') {
+    displayStats = [
+      { key: 'genre', label: 'GENRE', value: stats.genre || 'Club Mix' },
+      { key: 'bpm', label: 'BPM', value: `${Number(stats.bpm || 128)} BPM` },
+      { key: 'scheme', label: 'THEME', value: String(stats.colorScheme || 'cyber_club').replace('_', ' ').toUpperCase() }
     ];
   } else if (addon.id === 'valorant') {
     const k = Number(stats.kills || 0);
@@ -510,6 +579,21 @@ function buildObsGameStatsPayload(cfg = {}) {
     valLosses: Number(valStats.losses || 0),
     valMapCoverEnabled: Boolean(valStats.mapCoverEnabled),
     valMapCoverText: String(valStats.mapCoverText || 'RADAR VERDECKT // ANTI-SNIPE'),
+    prodName: String(prodStats.productName || 'Studio Pro Series X'),
+    prodTagline: String(prodStats.tagline || 'Präzision, Design & Leistung — Live Keynote'),
+    prodPriceBadge: String(prodStats.priceBadge || 'AB 299 € • NEU'),
+    prodPromoUrl: String(prodStats.promoUrl || ''),
+    prodTickerText: String(prodStats.tickerText || 'KEYNOTE LIVE'),
+    prodHighlights: parseAgendaItems(prodStats.highlightsText).slice(0, 5),
+    prodAgendaItems: parseAgendaItems(prodStats.agendaText),
+    prodActiveAgendaIdx: Math.max(0, Number(prodStats.activeAgendaIdx || 0)),
+    prodShowCard: prodStats.showCard !== false,
+    djName: String(djStats.djName || 'DJ LIVE SET'),
+    djSetTitle: String(djStats.setTitle || 'Midnight Club Session Vol. 1'),
+    djGenre: String(djStats.genre || 'Melodic Techno / House'),
+    djBpm: Math.max(60, Math.min(220, Number(djStats.bpm || 128))),
+    djColorScheme: String(djStats.colorScheme || 'cyber_club'),
+    djTickerText: String(djStats.tickerText || 'LIVE IN THE MIX'),
     stats: displayStats,
     chatCommands: addon.chatCommands
   };

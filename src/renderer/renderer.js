@@ -5214,6 +5214,28 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
     if (tronBox) tronBox.classList.toggle('hidden', addon.id !== 'techtalk');
     const valBox = document.getElementById('gaValControls');
     if (valBox) valBox.classList.toggle('hidden', addon.id !== 'valorant');
+    const prodBox = document.getElementById('gaProductControls');
+    if (prodBox) prodBox.classList.toggle('hidden', addon.id !== 'productlaunch');
+    const djBox = document.getElementById('gaDjControls');
+    if (djBox) djBox.classList.toggle('hidden', addon.id !== 'djstream');
+    if (addon.id === 'productlaunch') {
+      const pr = gaState.perAddonStats?.productlaunch || {};
+      const pAg = document.getElementById('gaProdAgendaText');
+      if (pAg && document.activeElement !== pAg) pAg.value = pr.agendaText || '';
+      const pHl = document.getElementById('gaProdHighlightsText');
+      if (pHl && document.activeElement !== pHl) pHl.value = pr.highlightsText || '';
+      const pShow = document.getElementById('gaProdShowCard');
+      if (pShow) pShow.checked = pr.showCard !== false;
+      const steps = String(pr.agendaText || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      const curIdx = Math.min(Math.max(0, Number(pr.activeAgendaIdx || 0)), Math.max(0, steps.length - 1));
+      const badge = document.getElementById('gaProdStepBadge');
+      if (badge) badge.textContent = steps.length ? `${String(curIdx + 1).padStart(2, '0')} / ${String(steps.length).padStart(2, '0')}` : '—';
+    }
+    if (addon.id === 'djstream') {
+      const dj = gaState.perAddonStats?.djstream || {};
+      const selSch = document.getElementById('gaDjColorScheme');
+      if (selSch) selSch.value = dj.colorScheme || 'cyber_club';
+    }
     if (addon.id === 'valorant') {
       const v = gaState.perAddonStats?.valorant || {};
       const chkValMap = document.getElementById('gaValMapCover');
@@ -5359,6 +5381,14 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
         nextAddonStats.mapCoverEnabled = Boolean(document.getElementById('gaValMapCover')?.checked);
         nextAddonStats.mapCoverText = document.getElementById('gaValMapCoverText')?.value.trim() || 'RADAR VERDECKT // ANTI-SNIPE';
       }
+      if (addon.id === 'productlaunch') {
+        nextAddonStats.agendaText = document.getElementById('gaProdAgendaText')?.value || '';
+        nextAddonStats.highlightsText = document.getElementById('gaProdHighlightsText')?.value || '';
+        nextAddonStats.showCard = document.getElementById('gaProdShowCard')?.checked !== false;
+      }
+      if (addon.id === 'djstream') {
+        nextAddonStats.colorScheme = document.getElementById('gaDjColorScheme')?.value || 'cyber_club';
+      }
       gaState.perAddonStats = { ...(gaState.perAddonStats || {}), [addon.id]: nextAddonStats };
     }
     const res = await window.omnichat.gameAddonsSave(gaState);
@@ -5493,6 +5523,40 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
   document.getElementById('btnGaCopyAbilityBarUrl')?.addEventListener('click', async () => {
     await navigator.clipboard.writeText('http://127.0.0.1:4588/lol-ability-bar');
     if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '⚔️ http://127.0.0.1:4588/lol-ability-bar kopiert! (LoL Ability-Bar Rahmen, 920×175 — passt sich an jedes Pack an)'; }
+  });
+  document.getElementById('btnGaCopyProdLtUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/product-lowerthird');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🎯 http://127.0.0.1:4588/product-lowerthird kopiert! (Keynote Bauchbinde, 980×150)'; }
+  });
+  document.getElementById('btnGaCopyProdCardUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/product-card');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🏷️ http://127.0.0.1:4588/product-card kopiert! (Produkt-Spotlight-Karte, 480×340)'; }
+  });
+  document.getElementById('btnGaCopyDjStageUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/dj-stage');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🎧 http://127.0.0.1:4588/dj-stage kopiert! (36-Band Audio-EQ Bühne, 1920×220)'; }
+  });
+  document.getElementById('btnGaCopyDjDeckUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/dj-nowplaying');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '💿 http://127.0.0.1:4588/dj-nowplaying kopiert! (Vinyl & BPM Deck, 520×145)'; }
+  });
+  document.getElementById('gaProdShowCard')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaProdAgendaText')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaProdHighlightsText')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaDjColorScheme')?.addEventListener('change', saveFromForm);
+  document.getElementById('btnGaProdPrevStep')?.addEventListener('click', () => {
+    if (!gaState?.perAddonStats?.productlaunch) return;
+    const steps = String(document.getElementById('gaProdAgendaText')?.value || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const cur = Number(gaState.perAddonStats.productlaunch.activeAgendaIdx || 0);
+    gaState.perAddonStats.productlaunch.activeAgendaIdx = Math.max(0, cur - 1);
+    saveFromForm().then(renderFields);
+  });
+  document.getElementById('btnGaProdNextStep')?.addEventListener('click', () => {
+    if (!gaState?.perAddonStats?.productlaunch) return;
+    const steps = String(document.getElementById('gaProdAgendaText')?.value || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const cur = Number(gaState.perAddonStats.productlaunch.activeAgendaIdx || 0);
+    gaState.perAddonStats.productlaunch.activeAgendaIdx = Math.min(Math.max(0, steps.length - 1), cur + 1);
+    saveFromForm().then(renderFields);
   });
   document.getElementById('btnGaCopyBgUrl')?.addEventListener('click', async () => {
     await navigator.clipboard.writeText('http://127.0.0.1:4588/lol-bg');
@@ -10332,6 +10396,99 @@ window.omnichat.discordLiveGet?.().then((r) => renderDiscordLiveStatus(r?.state)
   document.getElementById('btnGaOpenThemesDir')?.addEventListener('click', () => {
     window.omnichat.themesOpenDir?.();
   });
+
+  // Live 18-Band FFT Audio-Device Analyzer for DJ Sona Equalizer (optional Pro Mode; Auto uses OBS InputVolumeMeters + Spotify/Music Sync)
+  const eqSel = document.getElementById('gaDjAudioDeviceSelect');
+  const eqSelStream = document.getElementById('gaDjStreamAudioDeviceSelect');
+  const btnRefreshEqDev = document.getElementById('btnGaRefreshAudioDevices');
+  const btnRefreshEqDevStream = document.getElementById('btnGaDjRefreshAudioDevices');
+  let eqStream = null;
+  let eqCtx = null;
+  let eqRaf = 0;
+
+  function stopLiveAudioEq() {
+    if (eqRaf) { cancelAnimationFrame(eqRaf); eqRaf = 0; }
+    if (eqStream) { eqStream.getTracks().forEach((tr) => tr.stop()); eqStream = null; }
+    if (eqCtx) { eqCtx.close().catch(() => {}); eqCtx = null; }
+  }
+
+  async function populateAudioEqDevices() {
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    const selects = [eqSel, eqSelStream].filter(Boolean);
+    if (!selects.length) return;
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const inputs = devs.filter((d) => d.kind === 'audioinput');
+      selects.forEach((selEl) => {
+        const prev = selEl.value || 'auto';
+        selEl.innerHTML = '<option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>';
+        inputs.forEach((d, idx) => {
+          const opt = document.createElement('option');
+          opt.value = d.deviceId;
+          opt.textContent = `🎛️ 18-Band FFT: ${d.label || `Audio-Eingang ${idx + 1}`}`;
+          selEl.appendChild(opt);
+        });
+        selEl.value = Array.from(selEl.options).some((o) => o.value === prev) ? prev : 'auto';
+      });
+    } catch (e) {}
+  }
+
+  async function startLiveAudioEq(deviceId) {
+    stopLiveAudioEq();
+    if (!deviceId || deviceId === 'auto' || !navigator.mediaDevices?.getUserMedia) return;
+    try {
+      eqStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        video: false
+      });
+      eqCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = eqCtx.createMediaStreamSource(eqStream);
+      const analyser = eqCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.72;
+      src.connect(analyser);
+      const bins = new Uint8Array(analyser.frequencyBinCount);
+      let lastSend = 0;
+      function tickEq(now) {
+        eqRaf = requestAnimationFrame(tickEq);
+        if (now - lastSend < 33) return;
+        lastSend = now;
+        analyser.getByteFrequencyData(bins);
+        const bands = [];
+        let sum = 0;
+        for (let i = 0; i < 18; i++) {
+          const idx = Math.min(bins.length - 1, Math.floor(i * 1.9));
+          const v = Math.min(1, (bins[idx] || 0) / 230);
+          bands.push(Number(v.toFixed(3)));
+          sum += v;
+        }
+        const level = Number(Math.min(1, (sum / 18) * 1.35).toFixed(3));
+        window.omnichat.sendAudioEqFrame?.({ level, bands });
+      }
+      eqRaf = requestAnimationFrame(tickEq);
+      if (statusEl) {
+        statusEl.style.color = '#38bdf8';
+        statusEl.textContent = '🎧 DJ Sona 18-Band Live FFT-Equalizer aktiv!';
+      }
+    } catch (err) {
+      if (statusEl) {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = `⚠️ Audio-Eingang konnte nicht geöffnet werden: ${err.message}`;
+      }
+    }
+  }
+
+  eqSel?.addEventListener('change', () => {
+    if (eqSelStream) eqSelStream.value = eqSel.value;
+    startLiveAudioEq(eqSel.value);
+  });
+  eqSelStream?.addEventListener('change', () => {
+    if (eqSel) eqSel.value = eqSelStream.value;
+    startLiveAudioEq(eqSelStream.value);
+  });
+  btnRefreshEqDev?.addEventListener('click', populateAudioEqDevices);
+  btnRefreshEqDevStream?.addEventListener('click', populateAudioEqDevices);
+  populateAudioEqDevices();
 
   document.getElementById('btnOpenGameAddons')?.addEventListener('click', loadThemes);
   loadThemes();
