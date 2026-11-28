@@ -10616,6 +10616,20 @@ window.omnichat.discordLiveGet?.().then((r) => renderDiscordLiveStatus(r?.state)
   btnRefreshEqDev?.addEventListener('click', populateAudioEqDevices);
   btnRefreshEqDevStream?.addEventListener('click', populateAudioEqDevices);
   populateAudioEqDevices();
+  window.omnichat.onAudioEqStatus?.((st) => {
+    const pct = Math.round(Math.max(0, Math.min(1, Number(st?.level || 0))) * 100);
+    const active = pct >= 2;
+    const src = st?.source === 'fft' ? '18-Band FFT' : `OBS${st?.sourceName ? ` (${st.sourceName})` : ''}`;
+    const txt = active
+      ? `🟢 Live-Pegel [${src}]: ${pct}%`
+      : `⚫ Live-Pegel [${src}]: Stille (0%) — EQ pausiert`;
+    ['gaAudioMeterSona', 'gaAudioMeterDj'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = txt;
+      el.style.color = active ? '#4ade80' : '#94a3b8';
+    });
+  });
 
   document.getElementById('btnOpenGameAddons')?.addEventListener('click', loadThemes);
   loadThemes();

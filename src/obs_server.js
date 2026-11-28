@@ -5631,8 +5631,9 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       ctx.clearRect(0, 0, w, h);
       const cols = SCHEMES[curScheme] || SCHEMES.cyber_club;
-      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fresh = liveEq && (now - liveEqAt) < 1500;
       const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+      const obsLv = fresh && typeof liveEq.level === 'number' ? liveEq.level : 0;
       const beatPhase = (now / 1000) * (bpm / 60) * Math.PI * 2;
       const beatPulse = Math.pow(Math.max(0, Math.sin(beatPhase * 0.5)), 4);
 
@@ -5648,18 +5649,22 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
       for (let i = 0; i < barCount; i++) {
         const distMid = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2);
         const bandIdx = Math.min(17, Math.floor(distMid * 17));
-        let target = 0.08;
+        let target = 0.04;
         if (fft) {
-          target = Math.max(0.06, fft[bandIdx]);
+          target = fft[bandIdx] < 0.015 ? 0.04 : Math.max(0.05, fft[bandIdx]);
         } else if (fresh && typeof liveEq.level === 'number') {
-          const side = i < barCount / 2 ? (liveEq.left ?? liveEq.level) : (liveEq.right ?? liveEq.level);
-          const shape = (1 - distMid * 0.45) * (0.68 + 0.32 * Math.sin(now * 0.015 + i * 0.7));
-          target = Math.max(0.06, Math.min(1, side * shape * 1.15));
+          const side = i < barCount / 2 ? (liveEq.left ?? obsLv) : (liveEq.right ?? obsLv);
+          if (side < 0.012) {
+            target = 0.04;
+          } else {
+            const shape = (1 - distMid * 0.42) * (0.45 + 0.55 * Math.abs(Math.sin(now * 0.012 + i * 0.65) * Math.cos(now * 0.007 - i * 0.28)));
+            target = Math.max(0.06, Math.min(1, side * shape * 1.35));
+          }
         } else if (musicPlaying) {
           const wave = Math.abs(Math.sin(now * 0.005 + i * 0.45) * Math.cos(now * 0.0028 - i * 0.22));
           target = 0.14 + wave * (0.55 + beatPulse * 0.35) * (1 - distMid * 0.35);
         }
-        smoothBars[i] += (target - smoothBars[i]) * 0.28;
+        smoothBars[i] += (target - smoothBars[i]) * 0.3;
         avgEnergy += smoothBars[i];
       }
       avgEnergy /= barCount;
@@ -5815,13 +5820,15 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
     function tickMini(now) {
       requestAnimationFrame(tickMini);
       const bars = miniEq.children;
-      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fresh = liveEq && (now - liveEqAt) < 1500;
       const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 14 ? liveEq.bands : null;
-      vinyl.classList.toggle('paused', !fresh && !musicPlaying);
+      const obsLv = fresh && typeof liveEq.level === 'number' ? liveEq.level : 0;
+      const isActive = fresh ? (obsLv >= 0.012) : musicPlaying;
+      vinyl.classList.toggle('paused', !isActive);
       for (let i = 0; i < bars.length; i++) {
-        let h = 14;
-        if (fft) h = Math.max(12, Math.min(100, Math.round(fft[i] * 100)));
-        else if (fresh && typeof liveEq.level === 'number') h = Math.max(12, Math.min(100, Math.round(14 + liveEq.level * (0.65 + 0.35 * Math.sin(now * 0.02 + i)) * 92)));
+        let h = 10;
+        if (fft) h = fft[i] < 0.015 ? 10 : Math.max(10, Math.min(100, Math.round(fft[i] * 100)));
+        else if (fresh && typeof liveEq.level === 'number') h = obsLv < 0.012 ? 10 : Math.max(10, Math.min(100, Math.round(12 + obsLv * (0.45 + 0.55 * Math.abs(Math.sin(now * 0.014 + i * 0.7))) * 96)));
         else if (musicPlaying) h = Math.round(18 + Math.abs(Math.sin(now * 0.006 + i * 0.55)) * 74);
         bars[i].style.height = h + '%';
       }

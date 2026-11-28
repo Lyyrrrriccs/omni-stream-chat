@@ -250,20 +250,23 @@ class ObsWsClient extends EventEmitter {
         if (/\bheadset\b/i.test(low) && !/desktop|ausgabe|output|music|musik|spotify|system/i.test(low)) continue;
         const ch = Array.isArray(inp?.inputLevelsMul) ? inp.inputLevelsMul : [];
         if (!ch.length) continue;
-        const lRaw = Number(ch[0]?.[1] ?? ch[0]?.[0] ?? 0) || 0;
-        const rRaw = Number((ch[1] || ch[0])?.[1] ?? (ch[1] || ch[0])?.[0] ?? 0) || 0;
-        const boost = /spotify|music|musik|amazon|apple|desktop|system|browser|chrome|edge|firefox/i.test(low) ? 1.15 : 1.0;
+        const lRaw = Math.max(Number(ch[0]?.[1] || 0), Number(ch[0]?.[2] || 0), Number(ch[0]?.[0] || 0));
+        const rCh = ch[1] || ch[0];
+        const rRaw = Math.max(Number(rCh?.[1] || 0), Number(rCh?.[2] || 0), Number(rCh?.[0] || 0));
+        const boost = /spotify|music|musik|amazon|apple|desktop|system|browser|chrome|edge|firefox/i.test(low) ? 1.2 : 1.0;
         const peak = Math.max(lRaw, rRaw);
-        const lv = peak < 0.002 ? 0 : Math.min(1, Math.pow(peak, 0.5) * boost);
+        const lv = peak < 0.002 ? 0 : Math.min(1, Math.pow(peak, 0.48) * boost);
         if (lv > bestLevel) {
           bestLevel = lv;
-          bestL = Math.min(1, Math.pow(lRaw, 0.55));
-          bestR = Math.min(1, Math.pow(rRaw, 0.55));
+          bestL = lRaw < 0.002 ? 0 : Math.min(1, Math.pow(lRaw, 0.48) * boost);
+          bestR = rRaw < 0.002 ? 0 : Math.min(1, Math.pow(rRaw, 0.48) * boost);
           bestName = name;
         }
       }
-      if (bestLevel > 0.005 || this._lastObsMeterActive) {
-        this._lastObsMeterActive = bestLevel > 0.005;
+      const nowMs = Date.now();
+      const isSilent = bestLevel <= 0.005;
+      if (!isSilent || !this._lastObsMeterEmitAt || (nowMs - this._lastObsMeterEmitAt) >= 200) {
+        this._lastObsMeterEmitAt = nowMs;
         this.emit('audio-meter', {
           level: Number(bestLevel.toFixed(3)),
           left: Number(bestL.toFixed(3)),
