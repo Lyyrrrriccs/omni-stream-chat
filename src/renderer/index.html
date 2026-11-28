@@ -2295,6 +2295,8 @@
               <option value="lol">⚔️ League of Legends — Komplett-Suite</option>
               <option value="justchatting">💬 Just Chatting &amp; Talk Suite</option>
               <option value="techtalk">💠 Tech Talk &amp; GameDev — TRON Grid</option>
+              <option value="productlaunch">🎯 Produkt-Präsentation — Klassisch Modern</option>
+              <option value="djstream">🎧 DJ Stream Suite — Multi-Color &amp; Audio-EQ</option>
               <option value="cs2">🎯 Counter-Strike 2 (GSI)</option>
               <option value="minecraft">⛏️ Minecraft</option>
               <option value="souls">💀 Elden Ring / Soulsborne</option>
@@ -2439,6 +2441,51 @@
             <input type="text" id="gaValMapCoverText" placeholder="RADAR VERDECKT // ANTI-SNIPE" style="flex: 1; min-width: 150px;" />
             <button class="btn-sm" id="btnGaCopyValBarUrl" style="background: rgba(255,70,85,0.2); border-color: #ff4655; color: #fecdd3; font-weight: 700;">🔗 /val-bar URL</button>
             <button class="btn-sm" id="btnGaCopyValMapUrl">🔗 /val-map URL</button>
+          </div>
+        </div>
+
+        <div id="gaProductControls" class="hidden" style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px; padding: 11px 12px; border-radius: 8px; background: linear-gradient(145deg, rgba(16,20,30,0.92), rgba(24,29,42,0.90)); border: 1.5px solid rgba(212,175,55,0.55);">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 6px; flex-wrap: wrap;">
+            <span style="font-size: 11.5px; font-weight: 800; color: #e2c779;">🎯 KEYNOTE AGENDA &amp; KAPITEL (1 Zeile pro Punkt)</span>
+            <div style="display: flex; gap: 5px; align-items: center;">
+              <button class="btn-sm" id="btnGaProdPrevStep">◀ Zurück</button>
+              <span id="gaProdStepBadge" style="font-size: 11px; font-weight: 700; color: #f5e6b3;">01 / 04</span>
+              <button class="btn-sm" id="btnGaProdNextStep" style="background: #d4af37; color: #0f172a; font-weight: 800;">Nächster Punkt ▶</button>
+            </div>
+          </div>
+          <textarea id="gaProdAgendaText" class="tag-textarea" rows="3" placeholder="Willkommen &amp; Vision&#10;Design &amp; Verarbeitung&#10;Live-Demo &amp; Features&#10;Preise, Verfügbarkeit &amp; Q&amp;A"></textarea>
+          <div>
+            <label style="font-size: 11px; color: #e2c779; font-weight: 700;">✨ Produkt-Highlights (1 Punkt pro Zeile für Spotlight-Karte)</label>
+            <textarea id="gaProdHighlightsText" class="tag-textarea" rows="3" style="margin-top: 4px;" placeholder="Ultraleichtes Unibody-Aluminiumgehäuse&#10;Bis zu 24 Stunden Akkulaufzeit&#10;Sofort verfügbar mit 3 Jahren Garantie"></textarea>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 6px; border-top: 1px solid rgba(212,175,55,0.25);">
+            <label class="checkbox-row"><input type="checkbox" id="gaProdShowCard" checked /><span>🏷️ <strong>Produkt-Spotlight-Karte einblenden</strong></span></label>
+            <button class="btn-sm" id="btnGaCopyProdLtUrl" style="background: rgba(212,175,55,0.2); border-color: #d4af37; color: #f5e6b3; font-weight: 700;">🔗 /product-lowerthird (980×150)</button>
+            <button class="btn-sm" id="btnGaCopyProdCardUrl">🔗 /product-card (480×340)</button>
+          </div>
+        </div>
+
+        <div id="gaDjControls" class="hidden" style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px; padding: 11px 12px; border-radius: 8px; background: linear-gradient(145deg, rgba(8,12,26,0.94), rgba(18,8,30,0.92)); border: 1.5px solid rgba(0,229,255,0.58);">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+            <span style="font-size: 11.5px; font-weight: 800; color: #67e8f9;">🎨 DJ Farbschema (Live-Wechsel):</span>
+            <select id="gaDjColorScheme" style="flex: 1; min-width: 210px; font-size: 11.5px; font-weight: 700;">
+              <option value="cyber_club">⚡ Cyber Club (Cyan / Magenta / Violett)</option>
+              <option value="sunset_house">🌅 Sunset House (Koralle / Amber / Pink)</option>
+              <option value="techno_mono">🖤 Berlin Techno (Weiß / Laser-Rot / Tiefschwarz)</option>
+              <option value="acid_rave">🧪 Acid Rave (Acid-Lime / Hyper-Violett / Cyan)</option>
+              <option value="ibiza_gold">✨ Ibiza Gold (Champagner-Gold / Türkis / Mitternacht)</option>
+            </select>
+          </div>
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
+            <span style="font-size: 11px; font-weight: 700; color: #67e8f9;">🎧 Live Audio-Kopplung (EQ &amp; Vinyl):</span>
+            <select id="gaDjStreamAudioDeviceSelect" style="flex: 1; min-width: 210px; font-size: 11px;">
+              <option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>
+            </select>
+            <button class="btn-sm" id="btnGaDjRefreshAudioDevices" type="button">🔄 Geräte</button>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
+            <button class="btn-sm" id="btnGaCopyDjStageUrl" style="background: rgba(0,229,255,0.18); border-color: #00e5ff; color: #e0fbff; font-weight: 700;">🔗 /dj-stage (36-Band EQ Bühne, 1920×220)</button>
+            <button class="btn-sm" id="btnGaCopyDjDeckUrl">🔗 /dj-nowplaying (Vinyl &amp; BPM Deck, 520×145)</button>
           </div>
         </div>
 
