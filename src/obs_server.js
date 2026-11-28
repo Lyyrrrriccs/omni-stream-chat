@@ -4514,22 +4514,23 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
     body.champ-fx-dj-sona .ab-fx-sona { display: flex; }
     .ab-eq-strip {
       position: absolute;
-      left: 20%;
-      right: 30%;
-      top: 4%;
-      height: 14%;
+      left: 19%;
+      right: 29%;
+      top: 0%;
+      height: 25%;
       display: none;
       align-items: flex-end;
       justify-content: space-between;
-      gap: 3px;
+      gap: 4px;
       pointer-events: none;
-      z-index: 4;
+      z-index: 6;
     }
     .ab-eq-bar {
       flex: 1;
-      border-radius: 2px 2px 0 0;
-      background: linear-gradient(180deg, var(--ab-s), var(--ab-p));
-      box-shadow: 0 0 8px var(--ab-p);
+      border-radius: 3px 3px 0 0;
+      background: linear-gradient(180deg, #ffffff 0%, var(--ab-s) 24%, var(--ab-p) 100%);
+      border-top: 2px solid #ffffff;
+      box-shadow: 0 0 12px var(--ab-p), 0 0 6px var(--ab-s);
       animation: abEqBounce 0.9s ease-in-out infinite alternate;
     }
 
@@ -4835,49 +4836,57 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
       let musicPlaying = false;
       let liveEq = null;
       let liveEqAt = 0;
+      let prevObsLevel = 0;
 
       function tickAbEq(now) {
         requestAnimationFrame(tickAbEq);
         if (!eqEl || !document.body.classList.contains('champ-fx-dj-sona')) return;
         const bars = eqEl.children;
-        const fresh = liveEq && (now - liveEqAt) < 700;
+        const fresh = liveEq && (now - liveEqAt) < 900;
         const bands = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+        const obsLv = fresh && typeof liveEq.level === 'number' ? liveEq.level : 0;
+        const delta = Math.max(0, obsLv - prevObsLevel);
+        prevObsLevel = prevObsLevel * 0.82 + obsLv * 0.18;
         for (let i = 0; i < bars.length; i++) {
           let h = 8;
           if (bands) {
-            h = Math.max(8, Math.min(100, Math.round(bands[i] * 100)));
+            h = bands[i] < 0.015 ? 8 : Math.max(16, Math.min(100, Math.round(bands[i] * 125)));
           } else if (fresh && typeof liveEq.level === 'number') {
-            const lv = liveEq.level;
-            const side = i < 9 ? (liveEq.left ?? lv) : (liveEq.right ?? lv);
-            const curve = 0.65 + 0.35 * Math.sin((i / 17) * Math.PI);
-            const ripple = 0.72 + 0.28 * Math.sin(now * 0.018 + i * 0.85);
-            h = side < 0.015 ? 8 : Math.max(8, Math.min(100, Math.round(8 + side * curve * ripple * 96)));
+            const side = i < 9 ? (liveEq.left ?? obsLv) : (liveEq.right ?? obsLv);
+            const curve = 0.52 + 0.48 * Math.sin((i / 17) * Math.PI);
+            const ripple = 0.38 + 0.62 * Math.abs(Math.sin(now * 0.011 + i * 0.72) * Math.cos(now * 0.006 - i * 0.31));
+            const punch = Math.min(1, side * curve * ripple * 1.45 + delta * 2.2);
+            h = side < 0.015 ? 8 : Math.max(16, Math.min(100, Math.round(14 + punch * 86)));
           } else if (musicPlaying) {
             const synth = Math.abs(Math.sin(now * 0.006 + i * 0.52) * Math.cos(now * 0.0032 - i * 0.27));
-            h = Math.round(16 + synth * 78);
+            h = Math.round(20 + synth * 80);
           } else {
             h = 8;
           }
           bars[i].style.height = h + '%';
-          bars[i].style.opacity = (!fresh && !musicPlaying) ? '0.28' : '0.96';
+          bars[i].style.opacity = (!fresh && !musicPlaying) || (fresh && !bands && obsLv < 0.015) ? '0.28' : '0.96';
         }
       }
       requestAnimationFrame(tickAbEq);
 
-      try {
-        const ws = new WebSocket('ws://' + location.host);
-        ws.onmessage = (ev) => {
-          try {
-            const p = JSON.parse(ev.data);
-            if (p.type === 'spotify' && p.data) {
-              musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
-            } else if (p.type === 'audio-eq' && p.data) {
-              liveEq = p.data;
-              liveEqAt = performance.now();
-            }
-          } catch (e) {}
-        };
-      } catch (e) {}
+      function connectAbWs() {
+        try {
+          const ws = new WebSocket('ws://' + location.host);
+          ws.onmessage = (ev) => {
+            try {
+              const p = JSON.parse(ev.data);
+              if (p.type === 'spotify' && p.data) {
+                musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+              } else if (p.type === 'audio-eq' && p.data) {
+                liveEq = p.data;
+                liveEqAt = performance.now();
+              }
+            } catch (e) {}
+          };
+          ws.onclose = () => setTimeout(connectAbWs, 2000);
+        } catch (e) {}
+      }
+      connectAbWs();
     })();
   </script>
 </body>
@@ -5623,8 +5632,9 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       ctx.clearRect(0, 0, w, h);
       const cols = SCHEMES[curScheme] || SCHEMES.cyber_club;
-      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fresh = liveEq && (now - liveEqAt) < 1500;
       const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+      const obsLv = fresh && typeof liveEq.level === 'number' ? liveEq.level : 0;
       const beatPhase = (now / 1000) * (bpm / 60) * Math.PI * 2;
       const beatPulse = Math.pow(Math.max(0, Math.sin(beatPhase * 0.5)), 4);
 
@@ -5640,18 +5650,22 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
       for (let i = 0; i < barCount; i++) {
         const distMid = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2);
         const bandIdx = Math.min(17, Math.floor(distMid * 17));
-        let target = 0.08;
+        let target = 0.04;
         if (fft) {
-          target = Math.max(0.06, fft[bandIdx]);
+          target = fft[bandIdx] < 0.015 ? 0.04 : Math.max(0.05, fft[bandIdx]);
         } else if (fresh && typeof liveEq.level === 'number') {
-          const side = i < barCount / 2 ? (liveEq.left ?? liveEq.level) : (liveEq.right ?? liveEq.level);
-          const shape = (1 - distMid * 0.45) * (0.68 + 0.32 * Math.sin(now * 0.015 + i * 0.7));
-          target = Math.max(0.06, Math.min(1, side * shape * 1.15));
+          const side = i < barCount / 2 ? (liveEq.left ?? obsLv) : (liveEq.right ?? obsLv);
+          if (side < 0.012) {
+            target = 0.04;
+          } else {
+            const shape = (1 - distMid * 0.42) * (0.45 + 0.55 * Math.abs(Math.sin(now * 0.012 + i * 0.65) * Math.cos(now * 0.007 - i * 0.28)));
+            target = Math.max(0.06, Math.min(1, side * shape * 1.35));
+          }
         } else if (musicPlaying) {
           const wave = Math.abs(Math.sin(now * 0.005 + i * 0.45) * Math.cos(now * 0.0028 - i * 0.22));
           target = 0.14 + wave * (0.55 + beatPulse * 0.35) * (1 - distMid * 0.35);
         }
-        smoothBars[i] += (target - smoothBars[i]) * 0.28;
+        smoothBars[i] += (target - smoothBars[i]) * 0.3;
         avgEnergy += smoothBars[i];
       }
       avgEnergy /= barCount;
@@ -5685,24 +5699,28 @@ const OBS_DJ_STAGE_HTML = `<!DOCTYPE html>
     requestAnimationFrame(tick);
 
     fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyDjState).catch(() => {});
-    try {
-      const ws = new WebSocket('ws://' + location.host);
-      ws.onmessage = (ev) => {
-        try {
-          const p = JSON.parse(ev.data);
-          if (p.type === 'game-stats') applyDjState(p.data);
-          else if (p.type === 'spotify' && p.data) {
-            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
-            if (p.data.title) {
-              document.getElementById('djTicker').textContent = '🎵 ' + p.data.title + (p.data.artist ? ' — ' + p.data.artist : '');
+    function connectDjStageWs() {
+      try {
+        const ws = new WebSocket('ws://' + location.host);
+        ws.onmessage = (ev) => {
+          try {
+            const p = JSON.parse(ev.data);
+            if (p.type === 'game-stats') applyDjState(p.data);
+            else if (p.type === 'spotify' && p.data) {
+              musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+              if (p.data.title) {
+                document.getElementById('djTicker').textContent = '🎵 ' + p.data.title + (p.data.artist ? ' — ' + p.data.artist : '');
+              }
+            } else if (p.type === 'audio-eq' && p.data) {
+              liveEq = p.data;
+              liveEqAt = performance.now();
             }
-          } else if (p.type === 'audio-eq' && p.data) {
-            liveEq = p.data;
-            liveEqAt = performance.now();
-          }
-        } catch (e) {}
-      };
-    } catch (e) {}
+          } catch (e) {}
+        };
+        ws.onclose = () => setTimeout(connectDjStageWs, 2000);
+      } catch (e) {}
+    }
+    connectDjStageWs();
   </script>
 </body>
 </html>`;
@@ -5803,13 +5821,15 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
     function tickMini(now) {
       requestAnimationFrame(tickMini);
       const bars = miniEq.children;
-      const fresh = liveEq && (now - liveEqAt) < 700;
+      const fresh = liveEq && (now - liveEqAt) < 1500;
       const fft = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 14 ? liveEq.bands : null;
-      vinyl.classList.toggle('paused', !fresh && !musicPlaying);
+      const obsLv = fresh && typeof liveEq.level === 'number' ? liveEq.level : 0;
+      const isActive = fresh ? (obsLv >= 0.012) : musicPlaying;
+      vinyl.classList.toggle('paused', !isActive);
       for (let i = 0; i < bars.length; i++) {
-        let h = 14;
-        if (fft) h = Math.max(12, Math.min(100, Math.round(fft[i] * 100)));
-        else if (fresh && typeof liveEq.level === 'number') h = Math.max(12, Math.min(100, Math.round(14 + liveEq.level * (0.65 + 0.35 * Math.sin(now * 0.02 + i)) * 92)));
+        let h = 10;
+        if (fft) h = fft[i] < 0.015 ? 10 : Math.max(10, Math.min(100, Math.round(fft[i] * 100)));
+        else if (fresh && typeof liveEq.level === 'number') h = obsLv < 0.012 ? 10 : Math.max(10, Math.min(100, Math.round(12 + obsLv * (0.45 + 0.55 * Math.abs(Math.sin(now * 0.014 + i * 0.7))) * 96)));
         else if (musicPlaying) h = Math.round(18 + Math.abs(Math.sin(now * 0.006 + i * 0.55)) * 74);
         bars[i].style.height = h + '%';
       }
@@ -5817,26 +5837,30 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
     requestAnimationFrame(tickMini);
 
     fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyDeck).catch(() => {});
-    try {
-      const ws = new WebSocket('ws://' + location.host);
-      ws.onmessage = (ev) => {
-        try {
-          const p = JSON.parse(ev.data);
-          if (p.type === 'game-stats') applyDeck(p.data);
-          else if (p.type === 'spotify' && p.data) {
-            musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
-            if (p.data.title) {
-              hasSpotifyTrack = true;
-              document.getElementById('djDeckTrack').textContent = p.data.title;
-              document.getElementById('djDeckArtist').textContent = p.data.artist || '';
+    function connectDjDeckWs() {
+      try {
+        const ws = new WebSocket('ws://' + location.host);
+        ws.onmessage = (ev) => {
+          try {
+            const p = JSON.parse(ev.data);
+            if (p.type === 'game-stats') applyDeck(p.data);
+            else if (p.type === 'spotify' && p.data) {
+              musicPlaying = Boolean(p.data.playing) && Boolean(p.data.title);
+              if (p.data.title) {
+                hasSpotifyTrack = true;
+                document.getElementById('djDeckTrack').textContent = p.data.title;
+                document.getElementById('djDeckArtist').textContent = p.data.artist || '';
+              }
+            } else if (p.type === 'audio-eq' && p.data) {
+              liveEq = p.data;
+              liveEqAt = performance.now();
             }
-          } else if (p.type === 'audio-eq' && p.data) {
-            liveEq = p.data;
-            liveEqAt = performance.now();
-          }
-        } catch (e) {}
-      };
-    } catch (e) {}
+          } catch (e) {}
+        };
+        ws.onclose = () => setTimeout(connectDjDeckWs, 2000);
+      } catch (e) {}
+    }
+    connectDjDeckWs();
   </script>
 </body>
 </html>`;
@@ -7803,8 +7827,16 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.alert-card').map((s) => `body.cham
   background-size: 96px 18px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 18'%3E%3Cg fill='%2300e5ff' opacity='0.78'%3E%3Ccircle cx='6' cy='14' r='2.3'/%3E%3Ccircle cx='6' cy='9' r='2.3'/%3E%3Ccircle cx='18' cy='14' r='2.3'/%3E%3Ccircle cx='18' cy='9' r='2.3'/%3E%3Ccircle cx='18' cy='4' r='2.3'/%3E%3Ccircle cx='30' cy='14' r='2.3'/%3E%3Ccircle cx='42' cy='14' r='2.3'/%3E%3Ccircle cx='42' cy='9' r='2.3'/%3E%3Ccircle cx='42' cy='4' r='2.3'/%3E%3Ccircle cx='54' cy='14' r='2.3'/%3E%3Ccircle cx='54' cy='9' r='2.3'/%3E%3Ccircle cx='66' cy='14' r='2.3'/%3E%3Ccircle cx='66' cy='9' r='2.3'/%3E%3Ccircle cx='66' cy='4' r='2.3'/%3E%3Ccircle cx='78' cy='14' r='2.3'/%3E%3Ccircle cx='78' cy='9' r='2.3'/%3E%3Ccircle cx='90' cy='14' r='2.3'/%3E%3C/g%3E%3C/svg%3E");
   animation: djSonaEqScroll 5.2s linear infinite;
+  transform: scaleY(var(--dj-eq-scale, 0.25));
+  transform-origin: bottom center;
+  transition: opacity 0.22s ease;
   pointer-events: none;
   z-index: 6;
+}
+${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.alert-card').map((s) => `body.champ-fx-dj-sona.dj-audio-idle ${s}::before`).join(',\n')} {
+  animation-play-state: paused !important;
+  opacity: 0.22 !important;
+  transform: scaleY(0.22) !important;
 }
 ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.alert-card').map((s) => `body.champ-fx-dj-sona ${s}::after`).join(',\n')} {
   content: "";
@@ -9103,8 +9135,15 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
           drawBatchedRibbon(ctx, poly, -ph * 0.85 + 0.5, 0.18, '#a855f7', '#38bdf8', 2.2, 4.0, 12, now);
           moteCol = Math.random() < 0.5 ? '#a855f7' : '#38bdf8';
         } else if (m === 'dj-sona') {
-          const freshAudio = (now - djLiveAudioAt) < 700;
+          const freshAudio = (now - djLiveAudioAt) < 900;
           const activeAudio = freshAudio ? djLiveAudioLevel > 0.015 : djMusicPlaying;
+          if (i === 0) {
+            document.body.classList.toggle('dj-audio-idle', !activeAudio);
+            const eqScale = freshAudio
+              ? (djLiveAudioLevel < 0.015 ? 0.22 : (0.45 + djLiveAudioLevel * 0.95))
+              : (djMusicPlaying ? (0.55 + Math.abs(Math.sin(now * 0.008)) * 0.65) : 0.22);
+            document.body.style.setProperty('--dj-eq-scale', eqScale.toFixed(2));
+          }
           const si = djStanceIdx % 3;
           const colA = sonaCols[si], colB = sonaCols[(si + 1) % 3];
           const beatAmp = freshAudio

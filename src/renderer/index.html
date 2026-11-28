@@ -2347,12 +2347,13 @@
           <button class="btn-sm" id="btnGaCheckThemeUpdates" title="Installierte Overlay-Packs auf Überarbeitungen prüfen und automatisch aktualisieren">🔄 Pack-Updates</button>
           <button class="btn-sm" id="btnGaExportThemePack" title="Aktuelles Design-Pack als .json-Vorlage exportieren">📤 Export</button>
           <button class="btn-sm" id="btnGaOpenThemesDir" title="Lokalen themes/-Ordner öffnen">📂 Ordner</button>
-          <div id="gaDjAudioEqRow" style="display: flex; gap: 6px; align-items: center; width: 100%; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
+          <div id="gaDjAudioEqRow" style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap; width: 100%; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
             <span style="font-size: 11px; font-weight: 700; color: #67e8f9;">🎧 Live Audio-EQ (DJ Sona):</span>
             <select id="gaDjAudioDeviceSelect" style="flex: 1; min-width: 190px; font-size: 11px;">
               <option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>
             </select>
             <button class="btn-sm" id="btnGaRefreshAudioDevices" type="button" title="Audio-Eingänge (z. B. BlackHole / Loopback / Stereo Mix) neu scannen">🔄 Geräte</button>
+            <span id="gaAudioMeterSona" style="font-size: 10.5px; font-weight: 700; color: #94a3b8; width: 100%;">⚫ Live-Pegel: warte auf OBS-Audio oder FFT-Gerät…</span>
           </div>
         </div>
 
@@ -2484,6 +2485,7 @@
               <option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>
             </select>
             <button class="btn-sm" id="btnGaDjRefreshAudioDevices" type="button">🔄 Geräte</button>
+            <span id="gaAudioMeterDj" style="font-size: 10.5px; font-weight: 700; color: #94a3b8; width: 100%;">⚫ Live-Pegel: warte auf OBS-Audio oder FFT-Gerät…</span>
           </div>
           <div style="display: flex; gap: 6px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
             <button class="btn-sm" id="btnGaCopyDjStageUrl" style="background: rgba(0,229,255,0.18); border-color: #00e5ff; color: #e0fbff; font-weight: 700;">🔗 /dj-stage (36-Band EQ Bühne, 1920×220)</button>

@@ -2145,19 +2145,33 @@ function triggerTransitionRule(rule) {
 }
 
 let lastAudioEqBroadcastAt = 0;
+let lastAudioStatusUiAt = 0;
 obsWs.on('audio-meter', (meter) => {
   const activePack = obsServer.getEffectiveChampionTheme?.();
   const activeAddon = obsServer.currentGameStats?.addonId;
-  if ((!activePack || activePack.effect !== 'dj-sona') && activeAddon !== 'djstream') return;
   const now = Date.now();
+  if (now - lastAudioStatusUiAt >= 120) {
+    lastAudioStatusUiAt = now;
+    broadcastToWindows('audio-eq-status', {
+      source: 'obs',
+      level: meter.level,
+      sourceName: meter.sourceName || ''
+    });
+  }
+  if ((!activePack || activePack.effect !== 'dj-sona') && activeAddon !== 'djstream') return;
   if (now - lastAudioEqBroadcastAt < 33) return;
   lastAudioEqBroadcastAt = now;
-  obsServer.broadcastAudioEq({ source: 'obs', level: meter.level, left: meter.left, right: meter.right, ts: now });
+  obsServer.broadcastAudioEq({ source: 'obs', level: meter.level, left: meter.left, right: meter.right, sourceName: meter.sourceName || '', ts: now });
 });
 
 ipcMain.on('audio-eq-frame', (_ev, payload) => {
   if (!payload) return;
-  obsServer.broadcastAudioEq({ ...payload, source: 'fft', ts: Date.now() });
+  const now = Date.now();
+  obsServer.broadcastAudioEq({ ...payload, source: 'fft', ts: now });
+  if (now - lastAudioStatusUiAt >= 120) {
+    lastAudioStatusUiAt = now;
+    broadcastToWindows('audio-eq-status', { source: 'fft', level: Number(payload.level || 0), sourceName: '18-Band FFT' });
+  }
 });
 
 let tempPreviewTransitionPath = '';
