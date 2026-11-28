@@ -78,6 +78,28 @@ const DEFAULT_GAME_ADDONS_CONFIG = {
       colorScheme: 'cyber_club',
       tickerText: 'LIVE IN THE MIX • Trackwünsche im Chat • !track • !bpm • !genre'
     },
+    podcast: {
+      showTitle: 'STUDIO TALK PODCAST',
+      episode: 'EP. 42',
+      topic: 'KI, Creator Economy & Streaming-Zukunft 2026',
+      hostsText: 'Tobi | Host\nAlex | Co-Host\nMira | Gast (Tech)\nSam | Gast (Audio)',
+      activeSpeakerIdx: 0,
+      tickerText: 'LIVE PODCAST • Fragen im Chat mit !ask • Neue Folgen jeden Sonntag',
+      showGuestBar: true
+    },
+    cookingirl: {
+      mode: 'cooking',
+      dishOrTitle: 'Hausgemachte Ramen Bowl',
+      location: 'Studio-Küche • München',
+      stepsText: 'Brühe mit Ingwer & Knoblauch ansetzen\nChashu-Pork anbraten & glasieren\nNudeln al dente kochen\nAnrichten mit Ei, Nori & Frühlingszwiebeln',
+      activeStepIdx: 0,
+      ingredientsText: '400g Ramen-Nudeln\n1.2L Hühner- oder Misobrühe\n2 Eier (6:30 Min wachsweich)\nFrühlingszwiebeln, Nori & Sesam',
+      timerSec: 390,
+      timerRunning: false,
+      timerStartedAt: 0,
+      showCard: true,
+      tickerText: 'LIVE IN DER KÜCHE • Rezept-Befehle: !rezept • !zutaten • !timer'
+    },
     minecraft: { deaths: 0, diamonds: 0, days: 1, mode: 'Survival' },
     souls: { deaths: 0, bosses: 0, run: 'Any%', bossName: 'Aktueller Boss' },
     valorant: {
@@ -188,6 +210,35 @@ const GAME_ADDONS = [
     ],
     chatCommands: ['!track', '!bpm', '!genre', '!set'],
     eventHint: 'DJ-Stream-Komplett-Set: 36-Band Live Audio-EQ Bühne (/dj-stage), Vinyl/BPM Deck (/dj-nowplaying), 5 Farbschemen & echte Audio-/OBS-Pegel-Kopplung!'
+  },
+  {
+    id: 'podcast',
+    name: 'Podcast & Multi-Guest Talkshow — Broadcast',
+    icon: '📺',
+    accent: '#ef4444',
+    gameMatches: ['podcasts', 'talk shows & podcasts', 'podcast', 'interview', 'panel', 'debate'],
+    fields: [
+      { key: 'showTitle', label: '📺 Show-Name', type: 'text' },
+      { key: 'episode', label: '🎙️ Episode / Folge', type: 'text' },
+      { key: 'topic', label: '💬 Aktuelles Thema', type: 'text' },
+      { key: 'tickerText', label: '📢 TV-News-Ticker', type: 'text' }
+    ],
+    chatCommands: ['!thema', '!gast', '!folge'],
+    eventHint: 'Broadcast-Talkshow-Set: Multi-Host Bauchbinde mit 2–4 Sprechern (/podcast-desk) + Live Active-Speaker Spotlight (/podcast-guest-bar).'
+  },
+  {
+    id: 'cookingirl',
+    name: 'Cooking & IRL / Travel Suite',
+    icon: '🍳',
+    accent: '#f97316',
+    gameMatches: ['food & drink', 'cooking', 'travel & outdoors', 'irl', 'baking'],
+    fields: [
+      { key: 'dishOrTitle', label: '🍳 Gericht / IRL-Titel', type: 'text' },
+      { key: 'location', label: '📍 Ort / Küche / Route', type: 'text' },
+      { key: 'tickerText', label: '📢 Info-Ticker', type: 'text' }
+    ],
+    chatCommands: ['!rezept', '!zutaten', '!ort', '!timer'],
+    eventHint: 'Cooking & IRL Suite: Umschaltbares Küchen-/Travel-HUD (/cooking-hud) mit Live-Timer & Schritt-Stepper + Zutaten-/Packlisten-Karte (/cooking-card).'
   },
   {
     id: 'cs2',
@@ -310,6 +361,8 @@ const EXTRA_STAT_KEYS = {
   techtalk: ['agendaText', 'activeAgendaIdx', 'tickerText'],
   productlaunch: ['highlightsText', 'agendaText', 'activeAgendaIdx', 'showCard'],
   djstream: ['colorScheme'],
+  podcast: ['hostsText', 'activeSpeakerIdx', 'showGuestBar'],
+  cookingirl: ['mode', 'stepsText', 'activeStepIdx', 'ingredientsText', 'timerSec', 'timerRunning', 'timerStartedAt', 'showCard'],
   valorant: ['mapCoverEnabled', 'mapCoverText']
 };
 
@@ -431,6 +484,8 @@ function buildObsGameStatsPayload(cfg = {}) {
   const ttStats = ga.perAddonStats?.techtalk || {};
   const prodStats = ga.perAddonStats?.productlaunch || {};
   const djStats = ga.perAddonStats?.djstream || {};
+  const podStats = ga.perAddonStats?.podcast || {};
+  const cookStats = ga.perAddonStats?.cookingirl || {};
   const valStats = ga.perAddonStats?.valorant || {};
 
   const lolMatches = Array.isArray(lolStats.recentMatches) ? lolStats.recentMatches.slice(0, 6) : [];
@@ -482,6 +537,23 @@ function buildObsGameStatsPayload(cfg = {}) {
       { key: 'genre', label: 'GENRE', value: stats.genre || 'Club Mix' },
       { key: 'bpm', label: 'BPM', value: `${Number(stats.bpm || 128)} BPM` },
       { key: 'scheme', label: 'THEME', value: String(stats.colorScheme || 'cyber_club').replace('_', ' ').toUpperCase() }
+    ];
+  } else if (addon.id === 'podcast') {
+    const hosts = parseAgendaItems(stats.hostsText).slice(0, 4);
+    const activeIdx = Math.max(0, Math.min(Number(stats.activeSpeakerIdx || 0), Math.max(0, hosts.length - 1)));
+    const activeName = (hosts[activeIdx] || 'Host').split('|')[0].trim();
+    displayStats = [
+      { key: 'ep', label: 'FOLGE', value: stats.episode || 'LIVE' },
+      { key: 'speaker', label: 'AM MIKRO', value: activeName },
+      { key: 'guests', label: 'PANEL', value: `${hosts.length} Sprecher` }
+    ];
+  } else if (addon.id === 'cookingirl') {
+    const steps = parseAgendaItems(stats.stepsText);
+    const curStep = Math.min(Math.max(0, Number(stats.activeStepIdx || 0)), Math.max(0, steps.length - 1));
+    displayStats = [
+      { key: 'mode', label: 'MODUS', value: stats.mode === 'irl' ? '🌍 IRL / TRAVEL' : '🍳 COOKING' },
+      { key: 'loc', label: 'ORT', value: stats.location || 'Studio' },
+      { key: 'step', label: 'SCHRITT', value: steps.length ? `${curStep + 1} / ${steps.length}` : '—' }
     ];
   } else if (addon.id === 'valorant') {
     const k = Number(stats.kills || 0);
@@ -594,6 +666,27 @@ function buildObsGameStatsPayload(cfg = {}) {
     djBpm: Math.max(60, Math.min(220, Number(djStats.bpm || 128))),
     djColorScheme: String(djStats.colorScheme || 'cyber_club'),
     djTickerText: String(djStats.tickerText || 'LIVE IN THE MIX'),
+    podShowTitle: String(podStats.showTitle || 'STUDIO TALK PODCAST'),
+    podEpisode: String(podStats.episode || 'EP. 42'),
+    podTopic: String(podStats.topic || 'Live Talkshow & Community'),
+    podHosts: parseAgendaItems(podStats.hostsText).slice(0, 4).map((line) => {
+      const parts = line.split('|');
+      return { name: String(parts[0] || '').trim() || 'Host', role: String(parts[1] || '').trim() || 'Sprecher' };
+    }),
+    podActiveSpeakerIdx: Math.max(0, Number(podStats.activeSpeakerIdx || 0)),
+    podTickerText: String(podStats.tickerText || 'LIVE PODCAST'),
+    podShowGuestBar: podStats.showGuestBar !== false,
+    cookMode: cookStats.mode === 'irl' ? 'irl' : 'cooking',
+    cookDishOrTitle: String(cookStats.dishOrTitle || 'Hausgemachte Ramen Bowl'),
+    cookLocation: String(cookStats.location || 'Studio-Küche'),
+    cookSteps: parseAgendaItems(cookStats.stepsText),
+    cookActiveStepIdx: Math.max(0, Number(cookStats.activeStepIdx || 0)),
+    cookIngredients: parseAgendaItems(cookStats.ingredientsText).slice(0, 8),
+    cookTimerSec: Math.max(0, Number(cookStats.timerSec || 0)),
+    cookTimerRunning: Boolean(cookStats.timerRunning),
+    cookTimerStartedAt: Number(cookStats.timerStartedAt || 0),
+    cookShowCard: cookStats.showCard !== false,
+    cookTickerText: String(cookStats.tickerText || 'LIVE IN DER KÜCHE'),
     stats: displayStats,
     chatCommands: addon.chatCommands
   };

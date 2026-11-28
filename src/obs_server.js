@@ -5841,6 +5841,402 @@ const OBS_DJ_NOWPLAYING_HTML = `<!DOCTYPE html>
 </body>
 </html>`;
 
+const OBS_PODCAST_DESK_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Podcast Broadcast Desk</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #f8fafc; overflow: hidden; }
+    .pod-desk {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 12px 24px 16px;
+    }
+    .pod-shell {
+      background: linear-gradient(135deg, rgba(10, 12, 20, 0.96), rgba(20, 23, 34, 0.95));
+      border: 1.5px solid rgba(239, 68, 68, 0.55);
+      border-left: 6px solid #ef4444;
+      border-radius: 12px;
+      box-shadow: 0 14px 40px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+    }
+    .pod-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 14px 20px;
+    }
+    .pod-left { flex: 1; min-width: 0; }
+    .pod-meta { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
+    .pod-onair {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10.5px;
+      font-weight: 900;
+      letter-spacing: 0.14em;
+      padding: 3px 9px;
+      border-radius: 999px;
+      background: #ef4444;
+      color: #ffffff;
+    }
+    .pod-dot { width: 7px; height: 7px; border-radius: 50%; background: #ffffff; animation: podPulse 1.3s ease-in-out infinite; }
+    @keyframes podPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .pod-show { font-size: 11.5px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: #fca5a5; }
+    .pod-ep { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,0.08); color: #e2e8f0; }
+    .pod-topic { font-size: 22px; font-weight: 900; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
+    .pod-hosts { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .pod-host {
+      padding: 7px 13px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      transition: all 0.22s ease;
+      min-width: 112px;
+    }
+    .pod-host.active {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.28), rgba(244, 63, 94, 0.18));
+      border-color: #ef4444;
+      box-shadow: 0 0 18px rgba(239, 68, 68, 0.35);
+      transform: translateY(-2px);
+    }
+    .pod-host-name { font-size: 13px; font-weight: 800; color: #ffffff; display: flex; align-items: center; gap: 5px; }
+    .pod-host-role { font-size: 10.5px; color: #94a3b8; margin-top: 1px; }
+    .pod-host.active .pod-host-role { color: #fecaca; }
+    .pod-ticker {
+      padding: 6px 20px;
+      background: rgba(0, 0, 0, 0.38);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 11.5px;
+      color: #cbd5e1;
+      letter-spacing: 0.03em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  </style>
+</head>
+<body>
+  <div class="pod-desk">
+    <div class="pod-shell">
+      <div class="pod-main">
+        <div class="pod-left">
+          <div class="pod-meta">
+            <span class="pod-onair"><span class="pod-dot"></span>ON AIR</span>
+            <span class="pod-show" id="podShow">STUDIO TALK PODCAST</span>
+            <span class="pod-ep" id="podEp">EP. 42</span>
+          </div>
+          <div class="pod-topic" id="podTopic">KI, Creator Economy &amp; Streaming-Zukunft 2026</div>
+        </div>
+        <div class="pod-hosts" id="podHosts"></div>
+      </div>
+      <div class="pod-ticker" id="podTicker">LIVE PODCAST • Fragen im Chat mit !ask</div>
+    </div>
+  </div>
+  <script>
+    function applyPodcast(d) {
+      if (!d) return;
+      document.getElementById('podShow').textContent = d.podShowTitle || 'STUDIO TALK PODCAST';
+      document.getElementById('podEp').textContent = d.podEpisode || 'LIVE';
+      document.getElementById('podTopic').textContent = d.podTopic || '';
+      document.getElementById('podTicker').textContent = d.podTickerText || '';
+      const hostsEl = document.getElementById('podHosts');
+      hostsEl.innerHTML = '';
+      const hosts = Array.isArray(d.podHosts) ? d.podHosts : [];
+      const activeIdx = Math.max(0, Number(d.podActiveSpeakerIdx || 0));
+      hosts.forEach((h, idx) => {
+        const div = document.createElement('div');
+        div.className = 'pod-host' + (idx === activeIdx ? ' active' : '');
+        const n = document.createElement('div');
+        n.className = 'pod-host-name';
+        n.textContent = (idx === activeIdx ? '🎙️ ' : '') + (h.name || 'Host');
+        const r = document.createElement('div');
+        r.className = 'pod-host-role';
+        r.textContent = h.role || 'Sprecher';
+        div.appendChild(n);
+        div.appendChild(r);
+        hostsEl.appendChild(div);
+      });
+    }
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyPodcast).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyPodcast(p.data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_PODCAST_GUEST_BAR_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Podcast Active Speaker Bar</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #ffffff; overflow: hidden; display: flex; align-items: center; padding: 10px; }
+    .guest-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 14px 20px;
+      background: linear-gradient(135deg, rgba(12, 14, 22, 0.96), rgba(24, 18, 28, 0.95));
+      border: 1.5px solid rgba(239, 68, 68, 0.6);
+      border-left: 5px solid #ef4444;
+      border-radius: 12px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.58);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .guest-bar.hidden { opacity: 0; transform: translateY(14px); pointer-events: none; }
+    .guest-kicker { font-size: 10px; font-weight: 900; letter-spacing: 0.16em; text-transform: uppercase; color: #f87171; }
+    .guest-name { font-size: 22px; font-weight: 900; color: #ffffff; margin-top: 2px; }
+    .guest-role { font-size: 12.5px; color: #cbd5e1; margin-top: 1px; }
+    .guest-badge { font-size: 11px; font-weight: 900; padding: 5px 12px; border-radius: 999px; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fecaca; white-space: nowrap; }
+  </style>
+</head>
+<body>
+  <div class="guest-bar" id="guestBar">
+    <div>
+      <div class="guest-kicker" id="guestShow">STUDIO TALK PODCAST</div>
+      <div class="guest-name" id="guestName">Tobi</div>
+      <div class="guest-role" id="guestRole">Host</div>
+    </div>
+    <div class="guest-badge">🎙️ AM MIKRO</div>
+  </div>
+  <script>
+    function applyGuest(d) {
+      if (!d) return;
+      const bar = document.getElementById('guestBar');
+      bar.classList.toggle('hidden', d.podShowGuestBar === false);
+      const hosts = Array.isArray(d.podHosts) ? d.podHosts : [];
+      const idx = Math.max(0, Math.min(Number(d.podActiveSpeakerIdx || 0), Math.max(0, hosts.length - 1)));
+      const cur = hosts[idx] || { name: 'Host', role: 'Sprecher' };
+      document.getElementById('guestShow').textContent = (d.podShowTitle || 'PODCAST') + (d.podEpisode ? ' • ' + d.podEpisode : '');
+      document.getElementById('guestName').textContent = cur.name || 'Host';
+      document.getElementById('guestRole').textContent = cur.role || 'Sprecher';
+    }
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyGuest).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyGuest(p.data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_COOKING_HUD_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Cooking &amp; IRL HUD</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fefce8; overflow: hidden; padding: 10px; }
+    .cook-hud {
+      --ck-accent: #f97316;
+      --ck-soft: #fed7aa;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      background: linear-gradient(135deg, rgba(20, 15, 12, 0.95), rgba(32, 22, 16, 0.94));
+      border: 1.5px solid color-mix(in srgb, var(--ck-accent) 60%, transparent);
+      border-left: 6px solid var(--ck-accent);
+      border-radius: 14px;
+      padding: 14px 18px 10px;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+    }
+    .cook-hud.mode-irl {
+      --ck-accent: #10b981;
+      --ck-soft: #a7f3d0;
+      background: linear-gradient(135deg, rgba(10, 20, 22, 0.95), rgba(14, 28, 32, 0.94));
+    }
+    .cook-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .cook-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .cook-pill { font-size: 10.5px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: color-mix(in srgb, var(--ck-accent) 22%, transparent); border: 1px solid var(--ck-accent); color: var(--ck-soft); }
+    .cook-loc { font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .cook-right { display: flex; align-items: center; gap: 10px; }
+    .cook-timer { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 18px; font-weight: 900; padding: 4px 12px; border-radius: 8px; background: rgba(0,0,0,0.45); border: 1px solid var(--ck-accent); color: #ffffff; }
+    .cook-clock { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; font-weight: 700; color: var(--ck-soft); }
+    .cook-title { font-size: 21px; font-weight: 900; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 4px; }
+    .cook-step { font-size: 13px; color: var(--ck-soft); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cook-ticker { font-size: 11px; color: #cbd5e1; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  </style>
+</head>
+<body>
+  <div class="cook-hud" id="cookHud">
+    <div>
+      <div class="cook-top">
+        <div class="cook-badges">
+          <span class="cook-pill" id="cookModePill">🍳 COOKING</span>
+          <span class="cook-loc" id="cookLoc">📍 Studio-Küche</span>
+        </div>
+        <div class="cook-right">
+          <span class="cook-timer" id="cookTimer">06:30</span>
+          <span class="cook-clock" id="cookClock">12:00</span>
+        </div>
+      </div>
+      <div class="cook-title" id="cookTitle">Hausgemachte Ramen Bowl</div>
+      <div class="cook-step" id="cookStep">Schritt 1/4: Brühe ansetzen</div>
+    </div>
+    <div class="cook-ticker" id="cookTicker">LIVE IN DER KÜCHE • !rezept • !zutaten • !timer</div>
+  </div>
+  <script>
+    let timerBaseSec = 390;
+    let timerRunning = false;
+    let timerStartedAt = 0;
+
+    function fmtTime(sec) {
+      const s = Math.max(0, Math.floor(sec));
+      const m = Math.floor(s / 60);
+      const r = s % 60;
+      return String(m).padStart(2, '0') + ':' + String(r).padStart(2, '0');
+    }
+
+    function applyCook(d) {
+      if (!d) return;
+      const isIrl = d.cookMode === 'irl';
+      const hud = document.getElementById('cookHud');
+      hud.classList.toggle('mode-irl', isIrl);
+      document.getElementById('cookModePill').textContent = isIrl ? '🌍 IRL / TRAVEL' : '🍳 COOKING';
+      document.getElementById('cookLoc').textContent = '📍 ' + (d.cookLocation || 'Unterwegs');
+      document.getElementById('cookTitle').textContent = d.cookDishOrTitle || '';
+      document.getElementById('cookTicker').textContent = d.cookTickerText || '';
+      const steps = Array.isArray(d.cookSteps) ? d.cookSteps : [];
+      const idx = Math.max(0, Math.min(Number(d.cookActiveStepIdx || 0), Math.max(0, steps.length - 1)));
+      const prefix = isIrl ? 'Stopp ' : 'Schritt ';
+      document.getElementById('cookStep').textContent = steps.length ? (prefix + (idx + 1) + '/' + steps.length + ': ' + steps[idx]) : '';
+      timerBaseSec = Math.max(0, Number(d.cookTimerSec || 0));
+      timerRunning = Boolean(d.cookTimerRunning);
+      timerStartedAt = Number(d.cookTimerStartedAt || 0);
+    }
+
+    function tickClock() {
+      const now = new Date();
+      document.getElementById('cookClock').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      let rem = timerBaseSec;
+      if (timerRunning && timerStartedAt > 0) {
+        rem = Math.max(0, timerBaseSec - Math.floor((Date.now() - timerStartedAt) / 1000));
+      }
+      const el = document.getElementById('cookTimer');
+      el.textContent = (timerRunning ? '⏱ ' : '⏸ ') + fmtTime(rem);
+    }
+    setInterval(tickClock, 400);
+    tickClock();
+
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyCook).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyCook(p.data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
+const OBS_COOKING_CARD_HTML = `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>OmniGrid Studio — Cooking Zutaten &amp; IRL Checkliste</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100vw; height: 100vh; background: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #fefce8; overflow: hidden; padding: 12px; }
+    .cook-card {
+      --ck-accent: #f97316;
+      --ck-soft: #fed7aa;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(155deg, rgba(20, 15, 12, 0.96), rgba(32, 22, 16, 0.95));
+      border: 1.5px solid color-mix(in srgb, var(--ck-accent) 60%, transparent);
+      border-radius: 16px;
+      padding: 18px 20px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.58);
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .cook-card.mode-irl {
+      --ck-accent: #10b981;
+      --ck-soft: #a7f3d0;
+      background: linear-gradient(155deg, rgba(10, 20, 22, 0.96), rgba(14, 28, 32, 0.95));
+    }
+    .cook-card.hidden { opacity: 0; transform: scale(0.95); pointer-events: none; }
+    .cc-kicker { font-size: 10.5px; font-weight: 900; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ck-accent); }
+    .cc-title { font-size: 19px; font-weight: 900; color: #ffffff; margin-top: 3px; }
+    .cc-list { list-style: none; margin-top: 14px; display: flex; flex-direction: column; gap: 9px; flex: 1; overflow: hidden; }
+    .cc-item { display: flex; align-items: flex-start; gap: 9px; font-size: 13.5px; color: #f1f5f9; line-height: 1.35; }
+    .cc-dot { color: var(--ck-accent); font-weight: 900; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+  <div class="cook-card" id="cookCard">
+    <div class="cc-kicker" id="ccKicker">🥕 ZUTATEN &amp; VORBEREITUNG</div>
+    <div class="cc-title" id="ccTitle">Hausgemachte Ramen Bowl</div>
+    <ul class="cc-list" id="ccList"></ul>
+  </div>
+  <script>
+    function applyCard(d) {
+      if (!d) return;
+      const isIrl = d.cookMode === 'irl';
+      const card = document.getElementById('cookCard');
+      card.classList.toggle('mode-irl', isIrl);
+      card.classList.toggle('hidden', d.cookShowCard === false);
+      document.getElementById('ccKicker').textContent = isIrl ? '🎒 IRL CHECKLISTE / ROUTE' : '🥕 ZUTATEN & VORBEREITUNG';
+      document.getElementById('ccTitle').textContent = d.cookDishOrTitle || '';
+      const list = document.getElementById('ccList');
+      list.innerHTML = '';
+      const items = Array.isArray(d.cookIngredients) ? d.cookIngredients : [];
+      items.forEach((txt) => {
+        const li = document.createElement('li');
+        li.className = 'cc-item';
+        const dot = document.createElement('span');
+        dot.className = 'cc-dot';
+        dot.textContent = isIrl ? '▸' : '✦';
+        const sp = document.createElement('span');
+        sp.textContent = txt;
+        li.appendChild(dot);
+        li.appendChild(sp);
+        list.appendChild(li);
+      });
+    }
+    fetch('/api/game-stats').then((r) => (r.ok ? r.json() : null)).then(applyCard).catch(() => {});
+    try {
+      const ws = new WebSocket('ws://' + location.host);
+      ws.onmessage = (ev) => {
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'game-stats') applyCard(p.data);
+        } catch (e) {}
+      };
+    } catch (e) {}
+  </script>
+</body>
+</html>`;
+
 const OBS_VAL_BAR_HTML = `<!DOCTYPE html>
 <html lang="de">
 <head>
@@ -9241,6 +9637,14 @@ class ObsServer {
           res.end(OBS_DJ_STAGE_HTML);
         } else if (urlPath === '/dj-nowplaying') {
           res.end(OBS_DJ_NOWPLAYING_HTML);
+        } else if (urlPath === '/podcast-desk') {
+          res.end(OBS_PODCAST_DESK_HTML);
+        } else if (urlPath === '/podcast-guest-bar') {
+          res.end(OBS_PODCAST_GUEST_BAR_HTML);
+        } else if (urlPath === '/cooking-hud') {
+          res.end(OBS_COOKING_HUD_HTML);
+        } else if (urlPath === '/cooking-card') {
+          res.end(OBS_COOKING_CARD_HTML);
         } else if (urlPath === '/val-bar') {
           res.end(OBS_VAL_BAR_HTML);
         } else if (urlPath === '/val-map') {

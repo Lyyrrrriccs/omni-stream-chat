@@ -5218,6 +5218,59 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
     if (prodBox) prodBox.classList.toggle('hidden', addon.id !== 'productlaunch');
     const djBox = document.getElementById('gaDjControls');
     if (djBox) djBox.classList.toggle('hidden', addon.id !== 'djstream');
+    const podBox = document.getElementById('gaPodcastControls');
+    if (podBox) podBox.classList.toggle('hidden', addon.id !== 'podcast');
+    const cookBox = document.getElementById('gaCookingControls');
+    if (cookBox) cookBox.classList.toggle('hidden', addon.id !== 'cookingirl');
+    if (addon.id === 'podcast') {
+      const pod = gaState.perAddonStats?.podcast || {};
+      const pHosts = document.getElementById('gaPodHostsText');
+      if (pHosts && document.activeElement !== pHosts) pHosts.value = pod.hostsText || '';
+      const pShow = document.getElementById('gaPodShowGuestBar');
+      if (pShow) pShow.checked = pod.showGuestBar !== false;
+      const btnWrap = document.getElementById('gaPodSpeakerBtns');
+      if (btnWrap) {
+        btnWrap.innerHTML = '';
+        const hosts = String(pod.hostsText || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean).slice(0, 4);
+        const curIdx = Math.max(0, Math.min(Number(pod.activeSpeakerIdx || 0), Math.max(0, hosts.length - 1)));
+        hosts.forEach((line, idx) => {
+          const name = line.split('|')[0].trim() || `Host ${idx + 1}`;
+          const b = document.createElement('button');
+          b.className = 'btn-sm';
+          b.textContent = (idx === curIdx ? '🎙️ ' : '') + name;
+          if (idx === curIdx) {
+            b.style.background = '#ef4444';
+            b.style.color = '#ffffff';
+            b.style.fontWeight = '800';
+          }
+          b.addEventListener('click', () => {
+            gaState.perAddonStats.podcast = { ...(gaState.perAddonStats.podcast || {}), activeSpeakerIdx: idx };
+            renderFields();
+            saveFromForm();
+          });
+          btnWrap.appendChild(b);
+        });
+      }
+    }
+    if (addon.id === 'cookingirl') {
+      const ck = gaState.perAddonStats?.cookingirl || {};
+      const cMode = document.getElementById('gaCookMode');
+      if (cMode) cMode.value = ck.mode === 'irl' ? 'irl' : 'cooking';
+      const cSteps = document.getElementById('gaCookStepsText');
+      if (cSteps && document.activeElement !== cSteps) cSteps.value = ck.stepsText || '';
+      const cIng = document.getElementById('gaCookIngredientsText');
+      if (cIng && document.activeElement !== cIng) cIng.value = ck.ingredientsText || '';
+      const cShow = document.getElementById('gaCookShowCard');
+      if (cShow) cShow.checked = ck.showCard !== false;
+      const cTimer = document.getElementById('gaCookTimerSec');
+      if (cTimer && document.activeElement !== cTimer) cTimer.value = String(Number(ck.timerSec || 0));
+      const cBtn = document.getElementById('btnGaCookTimerToggle');
+      if (cBtn) cBtn.textContent = ck.timerRunning ? '⏸ Pause' : '▶ Start';
+      const steps = String(ck.stepsText || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+      const curIdx = Math.min(Math.max(0, Number(ck.activeStepIdx || 0)), Math.max(0, steps.length - 1));
+      const badge = document.getElementById('gaCookStepBadge');
+      if (badge) badge.textContent = steps.length ? `${String(curIdx + 1).padStart(2, '0')} / ${String(steps.length).padStart(2, '0')}` : '—';
+    }
     if (addon.id === 'productlaunch') {
       const pr = gaState.perAddonStats?.productlaunch || {};
       const pAg = document.getElementById('gaProdAgendaText');
@@ -5389,6 +5442,18 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
       if (addon.id === 'djstream') {
         nextAddonStats.colorScheme = document.getElementById('gaDjColorScheme')?.value || 'cyber_club';
       }
+      if (addon.id === 'podcast') {
+        nextAddonStats.hostsText = document.getElementById('gaPodHostsText')?.value || '';
+        nextAddonStats.showGuestBar = document.getElementById('gaPodShowGuestBar')?.checked !== false;
+      }
+      if (addon.id === 'cookingirl') {
+        nextAddonStats.mode = document.getElementById('gaCookMode')?.value === 'irl' ? 'irl' : 'cooking';
+        nextAddonStats.stepsText = document.getElementById('gaCookStepsText')?.value || '';
+        nextAddonStats.ingredientsText = document.getElementById('gaCookIngredientsText')?.value || '';
+        nextAddonStats.showCard = document.getElementById('gaCookShowCard')?.checked !== false;
+        const secInput = parseInt(document.getElementById('gaCookTimerSec')?.value || '0', 10);
+        if (!Number.isNaN(secInput) && !nextAddonStats.timerRunning) nextAddonStats.timerSec = Math.max(0, secInput);
+      }
       gaState.perAddonStats = { ...(gaState.perAddonStats || {}), [addon.id]: nextAddonStats };
     }
     const res = await window.omnichat.gameAddonsSave(gaState);
@@ -5539,6 +5604,68 @@ document.getElementById('btnSaveStreamInfo')?.addEventListener('click', async ()
   document.getElementById('btnGaCopyDjDeckUrl')?.addEventListener('click', async () => {
     await navigator.clipboard.writeText('http://127.0.0.1:4588/dj-nowplaying');
     if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '💿 http://127.0.0.1:4588/dj-nowplaying kopiert! (Vinyl & BPM Deck, 520×145)'; }
+  });
+  document.getElementById('btnGaCopyPodDeskUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/podcast-desk');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '📺 http://127.0.0.1:4588/podcast-desk kopiert! (Podcast Broadcast Desk, 1920×185)'; }
+  });
+  document.getElementById('btnGaCopyPodGuestUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/podcast-guest-bar');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🎙️ http://127.0.0.1:4588/podcast-guest-bar kopiert! (Active-Speaker Bar, 640×120)'; }
+  });
+  document.getElementById('btnGaCopyCookHudUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/cooking-hud');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🍳 http://127.0.0.1:4588/cooking-hud kopiert! (Cooking & IRL HUD, 920×160)'; }
+  });
+  document.getElementById('btnGaCopyCookCardUrl')?.addEventListener('click', async () => {
+    await navigator.clipboard.writeText('http://127.0.0.1:4588/cooking-card');
+    if (statusEl) { statusEl.style.color = '#4ade80'; statusEl.textContent = '🥕 http://127.0.0.1:4588/cooking-card kopiert! (Zutaten / IRL Checkliste, 420×340)'; }
+  });
+  document.getElementById('gaPodHostsText')?.addEventListener('change', () => { saveFromForm().then(renderFields); });
+  document.getElementById('gaPodShowGuestBar')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaCookMode')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaCookStepsText')?.addEventListener('change', () => { saveFromForm().then(renderFields); });
+  document.getElementById('gaCookIngredientsText')?.addEventListener('change', saveFromForm);
+  document.getElementById('gaCookShowCard')?.addEventListener('change', saveFromForm);
+  document.getElementById('btnGaCookPrevStep')?.addEventListener('click', () => {
+    if (!gaState) return;
+    const ck = gaState.perAddonStats?.cookingirl || {};
+    const steps = String(document.getElementById('gaCookStepsText')?.value || ck.stepsText || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const nextIdx = steps.length ? (Math.max(0, Number(ck.activeStepIdx || 0)) - 1 + steps.length) % steps.length : 0;
+    gaState.perAddonStats.cookingirl = { ...ck, activeStepIdx: nextIdx };
+    renderFields();
+    saveFromForm();
+  });
+  document.getElementById('btnGaCookNextStep')?.addEventListener('click', () => {
+    if (!gaState) return;
+    const ck = gaState.perAddonStats?.cookingirl || {};
+    const steps = String(document.getElementById('gaCookStepsText')?.value || ck.stepsText || '').split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+    const nextIdx = steps.length ? (Math.max(0, Number(ck.activeStepIdx || 0)) + 1) % steps.length : 0;
+    gaState.perAddonStats.cookingirl = { ...ck, activeStepIdx: nextIdx };
+    renderFields();
+    saveFromForm();
+  });
+  document.getElementById('btnGaCookTimerToggle')?.addEventListener('click', () => {
+    if (!gaState) return;
+    const ck = gaState.perAddonStats?.cookingirl || {};
+    if (ck.timerRunning) {
+      const elapsed = ck.timerStartedAt ? Math.floor((Date.now() - ck.timerStartedAt) / 1000) : 0;
+      const rem = Math.max(0, Number(ck.timerSec || 0) - elapsed);
+      gaState.perAddonStats.cookingirl = { ...ck, timerSec: rem, timerRunning: false, timerStartedAt: 0 };
+    } else {
+      const sec = Math.max(0, parseInt(document.getElementById('gaCookTimerSec')?.value || String(ck.timerSec || 0), 10) || 0);
+      gaState.perAddonStats.cookingirl = { ...ck, timerSec: sec, timerRunning: true, timerStartedAt: Date.now() };
+    }
+    renderFields();
+    saveFromForm();
+  });
+  document.getElementById('btnGaCookTimerReset')?.addEventListener('click', () => {
+    if (!gaState) return;
+    const ck = gaState.perAddonStats?.cookingirl || {};
+    const sec = Math.max(0, parseInt(document.getElementById('gaCookTimerSec')?.value || '390', 10) || 390);
+    gaState.perAddonStats.cookingirl = { ...ck, timerSec: sec, timerRunning: false, timerStartedAt: 0 };
+    renderFields();
+    saveFromForm();
   });
   document.getElementById('gaProdShowCard')?.addEventListener('change', saveFromForm);
   document.getElementById('gaProdAgendaText')?.addEventListener('change', saveFromForm);

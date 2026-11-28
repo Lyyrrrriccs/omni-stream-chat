@@ -479,6 +479,10 @@ function getBuiltinObsOverlays(port = 4588) {
     { id: 'product-card', label: '🏷️ Produkt-Spotlight-Karte (Features & Preis)', inputName: 'OmniGrid Produkt Karte', url: `${base}/product-card`, width: 480, height: 340, posX: 1410, posY: 320 },
     { id: 'dj-stage', label: '🎧 DJ Stream 36-Band Audio-EQ Bühne (Multi-Color)', inputName: 'OmniGrid DJ Stage EQ', url: `${base}/dj-stage`, width: 1920, height: 220, posX: 0, posY: 860 },
     { id: 'dj-nowplaying', label: '💿 DJ Stream Vinyl & BPM Deck (Audio-Reaktiv)', inputName: 'OmniGrid DJ Deck', url: `${base}/dj-nowplaying`, width: 520, height: 145, posX: 32, posY: 32 },
+    { id: 'podcast-desk', label: '📺 Podcast Broadcast Desk (2–4 Sprecher & Ticker)', inputName: 'OmniGrid Podcast Desk', url: `${base}/podcast-desk`, width: 1920, height: 185, posX: 0, posY: 895 },
+    { id: 'podcast-guest-bar', label: '🎙️ Podcast Active-Speaker Bauchbinde', inputName: 'OmniGrid Podcast Speaker', url: `${base}/podcast-guest-bar`, width: 640, height: 120, posX: 36, posY: 750 },
+    { id: 'cooking-hud', label: '🍳 Cooking & IRL HUD (Timer, Schritt & Ort)', inputName: 'OmniGrid Cooking IRL HUD', url: `${base}/cooking-hud`, width: 920, height: 160, posX: 500, posY: 900 },
+    { id: 'cooking-card', label: '🥕 Cooking Zutaten / IRL Checkliste', inputName: 'OmniGrid Cooking Karte', url: `${base}/cooking-card`, width: 420, height: 340, posX: 1470, posY: 320 },
     { id: 'val-bar', label: '🔫 Valorant Rank, RR & Match-Bar', inputName: 'OmniGrid Valorant Bar', url: `${base}/val-bar`, width: 560, height: 125, posX: 680, posY: 940 },
     { id: 'val-map', label: '🛡️ Valorant Radar-Cover (Anti-Snipe oben links)', inputName: 'OmniGrid Valorant Radar', url: `${base}/val-map`, width: 310, height: 310, posX: 16, posY: 16 },
     { id: 'goals', label: '🎯 Stream-Goals (Follower / Subs / Spenden)', inputName: 'OmniGrid Goals', url: `${base}/goals`, width: 460, height: 220, posX: 24, posY: 175 },
@@ -3947,6 +3951,18 @@ app.whenReady().then(async () => {
             gameName: 'DJ Live Set',
             chatTheme: 'neon',
             ids: ['dj-stage', 'dj-nowplaying', 'alerts', 'chat']
+          },
+          podcast: {
+            addonMode: 'podcast',
+            gameName: 'Podcast & Talkshow',
+            chatTheme: 'minimal',
+            ids: ['podcast-desk', 'podcast-guest-bar', 'jc-qna', 'chat']
+          },
+          cookingirl: {
+            addonMode: 'cookingirl',
+            gameName: 'Cooking & IRL',
+            chatTheme: 'default',
+            ids: ['cooking-hud', 'cooking-card', 'alerts', 'chat']
           }
         };
         const bundle = bundleMap[payload.bundleId];
