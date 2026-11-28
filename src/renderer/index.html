@@ -2297,6 +2297,8 @@
               <option value="techtalk">💠 Tech Talk &amp; GameDev — TRON Grid</option>
               <option value="productlaunch">🎯 Produkt-Präsentation — Klassisch Modern</option>
               <option value="djstream">🎧 DJ Stream Suite — Multi-Color &amp; Audio-EQ</option>
+              <option value="podcast">📺 Podcast &amp; Multi-Guest Talkshow — Broadcast</option>
+              <option value="cookingirl">🍳 Cooking &amp; IRL / Travel Suite</option>
               <option value="cs2">🎯 Counter-Strike 2 (GSI)</option>
               <option value="minecraft">⛏️ Minecraft</option>
               <option value="souls">💀 Elden Ring / Soulsborne</option>
@@ -2486,6 +2488,60 @@
           <div style="display: flex; gap: 6px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
             <button class="btn-sm" id="btnGaCopyDjStageUrl" style="background: rgba(0,229,255,0.18); border-color: #00e5ff; color: #e0fbff; font-weight: 700;">🔗 /dj-stage (36-Band EQ Bühne, 1920×220)</button>
             <button class="btn-sm" id="btnGaCopyDjDeckUrl">🔗 /dj-nowplaying (Vinyl &amp; BPM Deck, 520×145)</button>
+          </div>
+        </div>
+
+        <div id="gaPodcastControls" class="hidden" style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px; padding: 11px 12px; border-radius: 8px; background: linear-gradient(145deg, rgba(16,12,20,0.95), rgba(28,16,24,0.92)); border: 1.5px solid rgba(239,68,68,0.55);">
+          <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap;">
+            <span style="font-size: 11.5px; font-weight: 800; color: #fca5a5;">🎙️ Aktiver Sprecher (1-Klick Highlight):</span>
+            <div id="gaPodSpeakerBtns" style="display: flex; gap: 5px; flex-wrap: wrap;"></div>
+          </div>
+          <div>
+            <label style="font-size: 11px; color: #fecaca; font-weight: 700;">👥 Hosts &amp; Gäste (bis zu 4, Format: Name | Rolle pro Zeile)</label>
+            <textarea id="gaPodHostsText" class="tag-textarea" rows="3" style="margin-top: 4px;" placeholder="Tobi | Host&#10;Alex | Co-Host&#10;Mira | Gast (Tech)"></textarea>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 6px; border-top: 1px solid rgba(239,68,68,0.25);">
+            <label class="checkbox-row"><input type="checkbox" id="gaPodShowGuestBar" checked /><span>🎙️ <strong>Active-Speaker Bauchbinde einblenden</strong></span></label>
+            <button class="btn-sm" id="btnGaCopyPodDeskUrl" style="background: rgba(239,68,68,0.2); border-color: #ef4444; color: #fecaca; font-weight: 700;">🔗 /podcast-desk (1920×185)</button>
+            <button class="btn-sm" id="btnGaCopyPodGuestUrl">🔗 /podcast-guest-bar (640×120)</button>
+          </div>
+        </div>
+
+        <div id="gaCookingControls" class="hidden" style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px; padding: 11px 12px; border-radius: 8px; background: linear-gradient(145deg, rgba(22,16,12,0.95), rgba(32,22,16,0.92)); border: 1.5px solid rgba(249,115,22,0.55);">
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <span style="font-size: 11.5px; font-weight: 800; color: #fdba74;">Modus:</span>
+              <select id="gaCookMode" style="font-size: 11.5px; font-weight: 700;">
+                <option value="cooking">🍳 Cooking / Küche (Warm Amber)</option>
+                <option value="irl">🌍 IRL / Travel (Emerald)</option>
+              </select>
+            </div>
+            <div style="display: flex; gap: 5px; align-items: center;">
+              <button class="btn-sm" id="btnGaCookPrevStep">◀ Zurück</button>
+              <span id="gaCookStepBadge" style="font-size: 11px; font-weight: 700; color: #fed7aa;">01 / 04</span>
+              <button class="btn-sm" id="btnGaCookNextStep" style="background: #f97316; color: #0f172a; font-weight: 800;">Nächster Schritt ▶</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center; padding-top: 6px; border-top: 1px solid rgba(249,115,22,0.22);">
+            <span style="font-size: 11px; font-weight: 700; color: #fdba74;">⏱️ Küchen-/IRL-Timer (Sek.):</span>
+            <input type="number" id="gaCookTimerSec" min="0" max="36000" value="390" style="width: 82px; font-size: 11.5px;" />
+            <button class="btn-sm" id="btnGaCookTimerToggle" style="background: rgba(16,185,129,0.22); border-color: #10b981; color: #a7f3d0; font-weight: 700;">▶ Start</button>
+            <button class="btn-sm" id="btnGaCookTimerReset">↺ Reset</button>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div>
+              <label style="font-size: 11px; color: #fed7aa; font-weight: 700;">📋 Schritte / IRL-Route (1 pro Zeile)</label>
+              <textarea id="gaCookStepsText" class="tag-textarea" rows="3" style="margin-top: 4px;"></textarea>
+            </div>
+            <div>
+              <label style="font-size: 11px; color: #fed7aa; font-weight: 700;">🥕 Zutaten / Checkliste (1 pro Zeile)</label>
+              <textarea id="gaCookIngredientsText" class="tag-textarea" rows="3" style="margin-top: 4px;"></textarea>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 6px; border-top: 1px solid rgba(249,115,22,0.25);">
+            <label class="checkbox-row"><input type="checkbox" id="gaCookShowCard" checked /><span>🥕 <strong>Zutaten-/Checklisten-Karte einblenden</strong></span></label>
+            <button class="btn-sm" id="btnGaCopyCookHudUrl" style="background: rgba(249,115,22,0.2); border-color: #f97316; color: #fed7aa; font-weight: 700;">🔗 /cooking-hud (920×160)</button>
+            <button class="btn-sm" id="btnGaCopyCookCardUrl">🔗 /cooking-card (420×340)</button>
           </div>
         </div>
 
