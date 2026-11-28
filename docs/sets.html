@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OmniGrid Studio — Streamer Sets &amp; Studio Suites (Non-League)</title>
+  <meta name="description" content="Interactive live showcase of all non-League Streamer Sets in OmniGrid Studio: Product Presentation (Classic Modern), DJ Stream Multi-Color Audio-EQ, Just Chatting, TRON Tech Talk, Valorant, CS2, Minecraft, Soulsborne &amp; Universal." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background-color: #0b0f19; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .glass { background: rgba(17, 24, 39, 0.78); backdrop-filter: blur(12px); border: 1px solid rgba(55, 65, 81, 0.6); }
+    .filter-pill.active { background: #4f46e5; color: #fff; border-color: #818cf8; }
+    .preview-stage {
+      position: relative;
+      border-radius: 14px;
+      border: 1px solid rgba(71, 85, 105, 0.55);
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 18% 22%, rgba(99, 102, 241, 0.14), transparent 48%),
+        radial-gradient(circle at 82% 78%, rgba(236, 72, 153, 0.12), transparent 48%),
+        linear-gradient(155deg, #070b14 0%, #0e1526 55%, #070b14 100%);
+    }
+
+    /* 1. Product Presentation (Classic Modern) */
+    .prod-lt {
+      display: flex;
+      align-items: stretch;
+      background: linear-gradient(135deg, rgba(14, 17, 24, 0.96), rgba(24, 28, 38, 0.94));
+      border: 1px solid rgba(212, 175, 55, 0.45);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
+    }
+    .prod-gold-bar {
+      width: 5px;
+      background: linear-gradient(180deg, #f3e5ab, #d4af37, #9a7b24);
+      flex-shrink: 0;
+    }
+    .prod-card {
+      background: linear-gradient(160deg, rgba(15, 18, 26, 0.97), rgba(22, 26, 36, 0.95));
+      border: 1px solid rgba(212, 175, 55, 0.48);
+      border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+    .prod-card.is-hidden { opacity: 0.18; transform: scale(0.97); pointer-events: none; }
+
+    /* 2. DJ Stream Suite (Multi-Color) */
+    .dj-stage-box {
+      --dj-p: #00e5ff;
+      --dj-s: #ff2a6d;
+      --dj-t: #c084fc;
+      background: linear-gradient(180deg, rgba(6, 9, 20, 0.45) 0%, rgba(8, 12, 26, 0.96) 100%);
+      border: 1.5px solid color-mix(in srgb, var(--dj-p) 65%, transparent);
+      border-radius: 14px;
+      box-shadow: 0 0 28px color-mix(in srgb, var(--dj-p) 25%, transparent);
+      position: relative;
+      overflow: hidden;
+    }
+    .dj-stage-box.scheme-sunset_house, .dj-deck-box.scheme-sunset_house { --dj-p: #ff5e3a; --dj-s: #fbbf24; --dj-t: #ec4899; }
+    .dj-stage-box.scheme-techno_mono, .dj-deck-box.scheme-techno_mono { --dj-p: #f8fafc; --dj-s: #ef4444; --dj-t: #94a3b8; }
+    .dj-stage-box.scheme-acid_rave, .dj-deck-box.scheme-acid_rave { --dj-p: #a3e635; --dj-s: #a855f7; --dj-t: #22d3ee; }
+    .dj-stage-box.scheme-ibiza_gold, .dj-deck-box.scheme-ibiza_gold { --dj-p: #f5c542; --dj-s: #2dd4bf; --dj-t: #fde68a; }
+    .dj-deck-box {
+      --dj-p: #00e5ff;
+      --dj-s: #ff2a6d;
+      --dj-t: #c084fc;
+      background: linear-gradient(135deg, rgba(8, 11, 24, 0.95), rgba(16, 10, 28, 0.95));
+      border: 1.5px solid var(--dj-p);
+      border-radius: 14px;
+      box-shadow: 0 0 22px color-mix(in srgb, var(--dj-p) 35%, transparent);
+    }
+    .dj-vinyl {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: radial-gradient(circle, var(--dj-s) 0 18%, #090d16 19% 26%, #161e2e 27% 31%, #090d16 32% 53%, #1e293b 54% 58%, #090d16 59% 100%);
+      border: 2px solid var(--dj-p);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--dj-p) 60%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: djSpin 1.88s linear infinite;
+    }
+    .dj-vinyl.paused { animation-play-state: paused; }
+    @keyframes djSpin { to { transform: rotate(360deg); } }
+    .dj-scheme-btn.active { border-color: #ffffff; box-shadow: 0 0 0 2px rgba(255,255,255,0.28); }
+
+    /* 3. TRON Tech Talk */
+    .tron-box {
+      background:
+        linear-gradient(90deg, rgba(0, 240, 255, 0.06) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(rgba(0, 240, 255, 0.06) 1px, transparent 1px) 0 0 / 24px 24px,
+        linear-gradient(135deg, rgba(3, 12, 24, 0.96), rgba(6, 20, 38, 0.96));
+      border: 1.5px solid #00f0ff;
+      box-shadow: 0 0 22px rgba(0, 240, 255, 0.25), inset 0 0 14px rgba(0, 240, 255, 0.12);
+      border-radius: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .tron-scan {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(0, 240, 255, 0.16), transparent);
+      animation: tronSweep 3.4s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes tronSweep { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  </style>
+</head>
+<body class="antialiased selection:bg-indigo-500 selection:text-white">
+
+  <header class="sticky top-0 z-50 glass border-b border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="./index.html" class="flex items-center gap-3 hover:opacity-90 transition">
+        <span class="text-2xl">⚡</span>
+        <span class="font-bold text-lg tracking-tight text-white">OmniGrid Studio</span>
+        <span class="hidden sm:inline-block text-xs px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30" data-en="Streamer Sets" data-de="Streamer-Sets">Streamer-Sets</span>
+      </a>
+      <nav class="flex items-center gap-3 sm:gap-4 text-sm">
+        <a href="./packs.html" class="text-slate-300 hover:text-white transition" data-en="LoL Packs" data-de="LoL-Packs">LoL-Packs</a>
+        <a href="./packs-preview.html" class="hidden sm:inline px-3 py-1 rounded-lg bg-pink-600/20 border border-pink-500/40 text-pink-200 hover:bg-pink-600/35 font-semibold transition" data-en="👁️ LoL Preview" data-de="👁️ LoL-Vorschau">👁️ LoL-Vorschau</a>
+        <a href="./index.html" class="text-slate-300 hover:text-white transition" data-en="← Main Page" data-de="← Hauptseite">← Hauptseite</a>
+        <button id="langToggle" class="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-xs font-semibold border border-slate-700 transition">DE / EN</button>
+        <a href="https://github.com/Lyyrrrriccs/OmniGrid-Studio" target="_blank" class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium transition">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="py-12 lg:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Hero -->
+      <div class="text-center max-w-3xl mx-auto mb-10">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-medium mb-4">
+          <span data-en="Built-in OBS Overlay Suites • 100% Local • Zero League Clutter" data-de="Integrierte OBS-Overlay-Sets • 100 % Lokal • Ohne League-Effekte">Integrierte OBS-Overlay-Sets • 100 % Lokal • Ohne League-Effekte</span>
+        </div>
+        <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white" data-en="🎬 Streamer &amp; Studio Sets" data-de="🎬 Streamer- &amp; Studio-Sets">🎬 Streamer- &amp; Studio-Sets</h1>
+        <p class="mt-4 text-base sm:text-lg text-slate-400"
+           data-en="Preview all 9 non-League overlay suites built directly into OmniGrid Studio — from classic-modern Product Presentations and multi-color audio-reactive DJ Streams to Talk Shows, TRON Tech Talks, and Esports HUDs."
+           data-de="Alle 9 Nicht-League-Overlay-Sets von OmniGrid Studio direkt in der interaktiven Vorschau — von klassisch-moderner Produkt-Präsentation und Multi-Color DJ-Stream mit Audio-EQ bis zu Talk-Shows, TRON Tech-Talks und Esports-HUDs.">
+          Alle 9 Nicht-League-Overlay-Sets von OmniGrid Studio direkt in der interaktiven Vorschau — von klassisch-moderner Produkt-Präsentation und Multi-Color DJ-Stream mit Audio-EQ bis zu Talk-Shows, TRON Tech-Talks und Esports-HUDs.
+        </p>
+
+        <!-- Category Filters -->
+        <div class="mt-7 flex flex-wrap justify-center gap-2">
+          <button class="filter-pill active px-4 py-1.5 rounded-full text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-200 transition" data-filter="all" data-en="All Sets (9)" data-de="Alle Sets (9)">Alle Sets (9)</button>
+          <button class="filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-200 transition" data-filter="studio" data-en="Studio &amp; Music (2)" data-de="Studio &amp; Musik (2)">Studio &amp; Musik (2)</button>
+          <button class="filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-200 transition" data-filter="talk" data-en="Talk &amp; Tech (2)" data-de="Talk &amp; Tech (2)">Talk &amp; Tech (2)</button>
+          <button class="filter-pill px-4 py-1.5 rounded-full text-xs font-semibold border border-slate-700 bg-slate-800/80 text-slate-200 transition" data-filter="gaming" data-en="Gaming &amp; Esports (5)" data-de="Gaming &amp; Esports (5)">Gaming &amp; Esports (5)</button>
+        </div>
+      </div>
+
+      <!-- Featured Set 1: Product Presentation -->
+      <section class="set-card glass rounded-2xl p-6 sm:p-8 mb-8" data-cat="studio" style="border-color: rgba(212, 175, 55, 0.45); box-shadow: 0 0 32px rgba(212, 175, 55, 0.12);">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🎯</span>
+              <h2 class="text-xl sm:text-2xl font-bold text-white" data-en="Product Presentation — Classic Modern" data-de="Produkt-Präsentation — Klassisch Modern">Produkt-Präsentation — Klassisch Modern</h2>
+              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/35">KEYNOTE</span>
+            </div>
+            <p class="text-sm text-slate-400 mt-1.5 max-w-2xl"
+               data-en="Clean Apple-Keynote &amp; Studio Showcase aesthetic with frosted dark glass, champagne gold accents, live chapter/agenda stepper, toggleable feature spotlight card, and zero gaming clutter."
+               data-de="Edler Keynote- &amp; Studio-Look mit dunklem Milchglas, Champagner-Gold, Live-Agenda-Stepper, ein-/ausblendbarer Produkt-Spotlight-Karte und komplett ohne Gaming-Elemente.">
+              Edler Keynote- &amp; Studio-Look mit dunklem Milchglas, Champagner-Gold, Live-Agenda-Stepper, ein-/ausblendbarer Produkt-Spotlight-Karte und komplett ohne Gaming-Elemente.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="prodPrevBtn" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition">◀ <span data-en="Prev Step" data-de="Zurück">Zurück</span></button>
+            <button id="prodNextBtn" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/50 text-xs font-semibold text-amber-200 transition"><span data-en="Next Agenda Step" data-de="Nächster Punkt">Nächster Punkt</span> ▶</button>
+            <button id="prodCardToggle" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition" data-en="Toggle Spotlight Card" data-de="Spotlight-Karte an/aus">Spotlight-Karte an/aus</button>
+          </div>
+        </div>
+
+        <div class="preview-stage p-5 sm:p-7 grid lg:grid-cols-12 gap-6 items-end">
+          <!-- Lower-Third Preview -->
+          <div class="lg:col-span-8">
+            <div class="text-[11px] uppercase tracking-widest text-slate-400 mb-2 font-semibold">OBS: <code class="text-amber-300">/product-lowerthird</code> (980×150)</div>
+            <div class="prod-lt">
+              <div class="prod-gold-bar"></div>
+              <div class="p-4 sm:p-5 flex-1 min-w-0">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-1.5">
+                  <div class="flex items-center gap-2">
+                    <span id="prodStepBadge" class="text-[11px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-400/40">KAPITEL 1 / 4</span>
+                    <span id="prodAgendaLabel" class="text-xs font-semibold text-amber-100/90">01 • Design &amp; Material</span>
+                  </div>
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/15">Ab 199 € • Release Q4</span>
+                </div>
+                <div class="text-xl sm:text-2xl font-bold tracking-tight text-white">Studio Pro Series X</div>
+                <div class="text-xs sm:text-sm text-slate-300 mt-0.5">Präzision neu definiert — Gebürstetes Aluminium &amp; Zero-Latency Wireless</div>
+                <div class="mt-2.5 pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-slate-400">
+                  <span>✨ Vorbestellung ab sofort mit 15 % Launch-Rabatt</span>
+                  <span class="font-semibold text-amber-300">shop.example.com/pro</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Spotlight Card Preview -->
+          <div class="lg:col-span-4">
+            <div class="text-[11px] uppercase tracking-widest text-slate-400 mb-2 font-semibold">OBS: <code class="text-amber-300">/product-card</code> (480×340)</div>
+            <div id="prodSpotlightCard" class="prod-card p-5">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold tracking-widest uppercase text-amber-300">PRODUKT-HIGHLIGHTS</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-200 border border-amber-400/40">199 €</span>
+              </div>
+              <div class="text-lg font-bold text-white">Studio Pro Series X</div>
+              <ul class="mt-3 space-y-2 text-xs text-slate-200">
+                <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> CNC-gefrästes Aluminium-Gehäuse</li>
+                <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> 48 Stunden Akkulaufzeit + USB-C FastCharge</li>
+                <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> Studio-Referenzklang mit 0 ms Latenz</li>
+                <li class="flex items-center gap-2"><span class="text-amber-400">✦</span> 3 Jahre Garantie &amp; Direktversand</li>
+              </ul>
+              <div class="mt-4 pt-2.5 border-t border-white/10 text-center text-xs font-semibold text-amber-300">shop.example.com/pro</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Featured Set 2: DJ Stream Suite -->
+      <section class="set-card glass rounded-2xl p-6 sm:p-8 mb-8" data-cat="studio" style="border-color: rgba(0, 229, 255, 0.45); box-shadow: 0 0 32px rgba(0, 229, 255, 0.14);">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <div class="flex items-center gap-2.5">
+              <span class="text-2xl">🎧</span>
+              <h2 class="text-xl sm:text-2xl font-bold text-white" data-en="DJ Stream Suite — Multi-Color &amp; Live Audio-EQ" data-de="DJ Stream Suite — Multi-Color &amp; Live-Audio-EQ">DJ Stream Suite — Multi-Color &amp; Live-Audio-EQ</h2>
+              <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-400/35">AUDIO-REACTIVE</span>
+            </div>
+            <p class="text-sm text-slate-400 mt-1.5 max-w-2xl"
+               data-en="5 live-switchable club color schemes, 36-band mirrored audio-reactive spectrum analyzer, BPM-synced vinyl deck, and 3-stage audio coupling (18-band Web-Audio FFT, OBS InputVolumeMeters &amp; Spotify/Apple/Amazon Music)."
+               data-de="5 live umschaltbare Club-Farbschemen, 36-Band gespiegelter Audio-Spektrumanalyzer, BPM-synchrones Vinyl-Deck und 3-stufige Audio-Kopplung (18-Band Web-Audio-FFT, OBS-Pegel &amp; Spotify/Apple/Amazon Music).">
+              5 live umschaltbare Club-Farbschemen, 36-Band gespiegelter Audio-Spektrumanalyzer, BPM-synchrones Vinyl-Deck und 3-stufige Audio-Kopplung (18-Band Web-Audio-FFT, OBS-Pegel &amp; Spotify/Apple/Amazon Music).
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button class="dj-scheme-btn active px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-900/90 text-cyan-300 transition" data-scheme="cyber_club">Cyber Club</button>
+            <button class="dj-scheme-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-900/90 text-orange-300 transition" data-scheme="sunset_house">Sunset House</button>
+            <button class="dj-scheme-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-900/90 text-slate-200 transition" data-scheme="techno_mono">Techno Mono</button>
+            <button class="dj-scheme-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-900/90 text-lime-300 transition" data-scheme="acid_rave">Acid Rave</button>
+            <button class="dj-scheme-btn px-2.5 py-1.5 rounded-lg text-xs font-bold border border-slate-700 bg-slate-900/90 text-amber-300 transition" data-scheme="ibiza_gold">Ibiza Gold</button>
+            <button id="djPlayToggle" class="px-3 py-1.5 rounded-lg text-xs font-bold border border-emerald-500/50 bg-emerald-500/20 text-emerald-200 transition">🔊 <span data-en="Music: Playing" data-de="Musik: Läuft">Musik: Läuft</span></button>
+          </div>
+        </div>
+
+        <div class="preview-stage p-5 sm:p-7 space-y-5">
+          <!-- DJ Vinyl Deck -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div class="max-w-md w-full">
+              <div class="text-[11px] uppercase tracking-widest text-slate-400 mb-2 font-semibold">OBS: <code class="text-cyan-300">/dj-nowplaying</code> (520×145)</div>
+              <div id="djDeckBox" class="dj-deck-box scheme-cyber_club p-3.5 flex items-center gap-4">
+                <div id="djVinylEl" class="dj-vinyl"><div class="w-3 h-3 rounded-full bg-white"></div></div>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-[10px] font-extrabold tracking-widest uppercase" style="color: var(--dj-p);">MELODIC TECHNO</span>
+                    <span class="text-[10px] font-black px-2 py-0.5 rounded-full text-white" style="border: 1px solid var(--dj-s); background: color-mix(in srgb, var(--dj-s) 22%, transparent);">128 BPM</span>
+                  </div>
+                  <div class="text-base font-extrabold text-white truncate mt-0.5">Midnight Pulse (Extended Mix)</div>
+                  <div class="text-xs text-slate-300 truncate">DJ NOVA • Live Club Session</div>
+                  <div id="djMiniEq" class="flex items-end gap-1 h-4 mt-2"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-xs text-slate-400 sm:text-right space-y-1">
+              <div class="font-semibold text-slate-200" data-en="Live Audio Coupling:" data-de="Live-Audio-Kopplung:">Live-Audio-Kopplung:</div>
+              <div>1. Web-Audio 18-Band FFT (Mischpult / BlackHole)</div>
+              <div>2. OBS WebSocket <code class="text-cyan-300">InputVolumeMeters</code></div>
+              <div>3. Spotify / Apple / Amazon Music Sync</div>
+            </div>
+          </div>
+
+          <!-- DJ Stage 36-Band Spectrum -->
+          <div>
+            <div class="text-[11px] uppercase tracking-widest text-slate-400 mb-2 font-semibold">OBS: <code class="text-cyan-300">/dj-stage</code> (1920×220)</div>
+            <div id="djStageBox" class="dj-stage-box scheme-cyber_club">
+              <canvas id="djStageCanvas" class="w-full block" style="height: 120px;"></canvas>
+              <div class="px-5 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 bg-black/35">
+                <div class="flex items-center gap-3">
+                  <span class="text-sm sm:text-base font-black tracking-wide text-white">DJ NOVA</span>
+                  <span class="text-xs px-2.5 py-0.5 rounded-full font-bold text-white" style="border: 1px solid var(--dj-p); background: color-mix(in srgb, var(--dj-p) 18%, transparent);">MELODIC TECHNO • 128 BPM</span>
+                </div>
+                <div class="text-xs text-slate-300 font-medium">🎵 Midnight Pulse (Extended Mix) — Requests im Chat mit !song</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Grid for the remaining 7 Non-League Sets -->
+      <div class="grid md:grid-cols-2 gap-6">
+
+        <!-- 3. Just Chatting & Talk Suite -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="talk">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">🎙️</span><h3 class="text-lg font-bold text-white">Just Chatting &amp; Talk Suite</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-300 border border-indigo-500/30">TALK</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Clean broadcast Lower-Third for stream topics &amp; guest names plus a live Q&amp;A viewer question card with queue." data-de="Saubere Broadcast-Bauchbinde für Stream-Themen &amp; Gäste plus Live-Q&amp;A-Zuschauerfragen-Karte mit Warteschlange.">Saubere Broadcast-Bauchbinde für Stream-Themen &amp; Gäste plus Live-Q&amp;A-Zuschauerfragen-Karte mit Warteschlange.</p>
+
+            <div class="preview-stage p-4 space-y-3">
+              <div class="rounded-xl p-3.5 border border-indigo-400/40 bg-slate-900/90 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">AKTUELLES THEMA</div>
+                  <div class="text-sm font-bold text-white">Streaming-Setup 2026 &amp; Community Q&amp;A</div>
+                  <div class="text-xs text-slate-400">Host: Tobi • Gast: Alex</div>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-1 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">● LIVE</span>
+              </div>
+              <div class="rounded-xl p-3 border border-purple-400/40 bg-purple-950/35">
+                <div class="text-[10px] font-bold text-purple-300 uppercase">💬 Zuschauerfrage • @mira_tv (Twitch)</div>
+                <div class="text-xs text-slate-100 mt-1">„Welches Mikrofon nutzt du gerade für den warmen Podcast-Sound?“</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-indigo-300">/jc-lowerthird</code>
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-indigo-300">/jc-qna</code>
+          </div>
+        </article>
+
+        <!-- 4. Tech Talk & GameDev — TRON Grid -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="talk">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">⚡</span><h3 class="text-lg font-bold text-white">Tech Talk &amp; GameDev — TRON Grid</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">DEV / TECH</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Futuristic TRON Lightcycle grid lower-third with animated cyan scanline, speaker tag, and live coding/tech ticker." data-de="Futuristische TRON-Lightcycle-Bauchbinde mit animierter Cyan-Scanline, Speaker-Badge und Live-Coding-/Tech-Ticker.">Futuristische TRON-Lightcycle-Bauchbinde mit animierter Cyan-Scanline, Speaker-Badge und Live-Coding-/Tech-Ticker.</p>
+
+            <div class="preview-stage p-4">
+              <div class="tron-box p-4">
+                <div class="tron-scan"></div>
+                <div class="relative z-10 flex items-center justify-between gap-2 mb-1">
+                  <span class="text-[10px] font-black tracking-widest uppercase text-cyan-300">GRID SESSION // LIVE CODING</span>
+                  <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-200 border border-cyan-400/40">v2.6 • 60FPS</span>
+                </div>
+                <div class="relative z-10 text-base font-extrabold text-white">Building Real-Time Audio Visualizers in Canvas</div>
+                <div class="relative z-10 text-xs text-cyan-100/80 mt-1">github.com/Lyyrrrriccs/OmniGrid-Studio • Node.js + Electron</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-cyan-300">/tron-talk</code>
+          </div>
+        </article>
+
+        <!-- 5. Valorant — Tactical Esports Suite -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="gaming">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">🎯</span><h3 class="text-lg font-bold text-white">Valorant — Tactical Esports Suite</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">ESPORTS</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Sharp Valorant rank &amp; RR progress bar, W/L session stats, plus a tactical Map Scoreboard overlay." data-de="Scharfe Valorant-Rank- &amp; RR-Leiste, Session-W/L-Stats sowie ein taktisches Map-Scoreboard-Overlay.">Scharfe Valorant-Rank- &amp; RR-Leiste, Session-W/L-Stats sowie ein taktisches Map-Scoreboard-Overlay.</p>
+
+            <div class="preview-stage p-4 space-y-3">
+              <div class="rounded-lg p-3.5 border border-rose-500/50 bg-slate-950/90 flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-rose-400">ASCENDANT II • 74 RR</div>
+                  <div class="w-40 h-1.5 rounded-full bg-slate-800 mt-1.5 overflow-hidden"><div class="h-full w-3/4 bg-gradient-to-r from-rose-500 to-emerald-400"></div></div>
+                </div>
+                <div class="text-right">
+                  <div class="text-sm font-black text-white">5W — 2L</div>
+                  <div class="text-[11px] text-emerald-400 font-bold">+62 RR Session</div>
+                </div>
+              </div>
+              <div class="rounded-lg px-3.5 py-2 border border-slate-700/80 bg-slate-900/90 flex items-center justify-between text-xs font-bold">
+                <span class="text-emerald-400">ASCENT • 11</span>
+                <span class="text-slate-400 uppercase tracking-widest text-[10px]">COMPETITIVE</span>
+                <span class="text-rose-400">8 • ENEMY</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-rose-300">/val-bar</code>
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-rose-300">/val-map</code>
+          </div>
+        </article>
+
+        <!-- 6. Counter-Strike 2 (GSI) -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="gaming">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">🔫</span><h3 class="text-lg font-bold text-white">Counter-Strike 2 (GSI)</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30">LIVE GSI</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Direct local Game State Integration for live K/D/A, Headshot %, Map Score &amp; Session Winrate." data-de="Direkte lokale Game-State-Integration für Live-K/D/A, Headshot-Quote, Map-Score &amp; Session-Winrate.">Direkte lokale Game-State-Integration für Live-K/D/A, Headshot-Quote, Map-Score &amp; Session-Winrate.</p>
+
+            <div class="preview-stage p-4">
+              <div class="rounded-xl p-3.5 border border-amber-500/45 bg-slate-950/90 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-amber-400">CS2 PREMIER • 18,450</div>
+                  <div class="text-base font-black text-white mt-0.5">K/D/A 24 / 11 / 6</div>
+                </div>
+                <div class="text-right">
+                  <div class="text-xs font-bold text-amber-300">HS 58 %</div>
+                  <div class="text-[11px] text-slate-400">Mirage • 12 : 9</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-amber-300">/game-stats</code>
+          </div>
+        </article>
+
+        <!-- 7. Minecraft -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="gaming">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">⛏️</span><h3 class="text-lg font-bold text-white">Minecraft Survival &amp; Hardcore</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">SANDBOX</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Compact survival HUD with Day Counter, Death Counter, Biome/Goal display, and hotkey controls." data-de="Kompaktes Survival-HUD mit Tag-Zähler, Death-Counter, Biom-/Projekt-Anzeige und Hotkey-Steuerung.">Kompaktes Survival-HUD mit Tag-Zähler, Death-Counter, Biom-/Projekt-Anzeige und Hotkey-Steuerung.</p>
+
+            <div class="preview-stage p-4">
+              <div class="rounded-xl p-3.5 border border-emerald-500/45 bg-slate-950/90 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-emerald-400">HARDCORE WORLD</div>
+                  <div class="text-base font-black text-white mt-0.5">Tag 142 • 0 Tode</div>
+                </div>
+                <div class="text-right text-xs text-slate-300">
+                  <div class="font-bold text-emerald-300">Projekt: Mega Base</div>
+                  <div class="text-[11px] text-slate-400">Overworld</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-emerald-300">/game-stats</code>
+          </div>
+        </article>
+
+        <!-- 8. Elden Ring / Soulsborne -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between" data-cat="gaming">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2"><span class="text-2xl">⚔️</span><h3 class="text-lg font-bold text-white">Elden Ring / Soulsborne</h3></div>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-300 border border-yellow-500/30">CHALLENGE</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-4" data-en="Boss Attempts tracker, Total Deaths counter, and current Boss Name with 1-click Stream-Deck/Hotkey increment." data-de="Boss-Versuche-Tracker, Gesamt-Tode-Zähler und aktueller Boss-Name mit 1-Klick-Hotkey-Steuerung.">Boss-Versuche-Tracker, Gesamt-Tode-Zähler und aktueller Boss-Name mit 1-Klick-Hotkey-Steuerung.</p>
+
+            <div class="preview-stage p-4">
+              <div class="rounded-xl p-3.5 border border-yellow-500/45 bg-slate-950/90 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-yellow-400">BOSS: MALENIA, BLADE OF MIQUELLA</div>
+                  <div class="text-base font-black text-white mt-0.5">Versuch #37 • Gesamt: 114 Tode</div>
+                </div>
+                <span class="text-xs font-bold px-2.5 py-1 rounded bg-yellow-500/15 text-yellow-300 border border-yellow-500/35">RL 125</span>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 pt-3 border-t border-slate-800 flex flex-wrap gap-2 text-[11px] text-slate-400">
+            <code class="px-2 py-0.5 rounded bg-slate-900 text-yellow-300">/game-stats</code>
+          </div>
+        </article>
+
+        <!-- 9. Universal Game Counter -->
+        <article class="set-card glass rounded-2xl p-6 flex flex-col justify-between md:col-span-2" data-cat="gaming">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="max-w-xl">
+              <div class="flex items-center gap-2 mb-1.5">
+                <span class="text-2xl">🎮</span>
+                <h3 class="text-lg font-bold text-white">Universal Game Counter</h3>
+                <span class="text-[11px] px-2 py-0.5 rounded-full bg-slate-700 text-slate-200">FLEXIBLE</span>
+              </div>
+              <p class="text-sm text-slate-400" data-en="Works with any game or challenge run: custom title, Wins/Losses, custom counter label, and Stream-Deck / Hotkey buttons." data-de="Funktioniert für jedes Spiel oder jede Challenge: eigener Titel, Wins/Losses, frei wählbares Counter-Label und Hotkeys.">Funktioniert für jedes Spiel oder jede Challenge: eigener Titel, Wins/Losses, frei wählbares Counter-Label und Hotkeys.</p>
+            </div>
+            <div class="preview-stage p-4 min-w-[280px] flex-1 max-w-md">
+              <div class="rounded-xl p-3.5 border border-indigo-400/45 bg-slate-950/90 flex items-center justify-between">
+                <div>
+                  <div class="text-[10px] font-bold uppercase tracking-widest text-indigo-300">CHALLENGE RUN</div>
+                  <div class="text-base font-black text-white">Wins: 14 • Fails: 3</div>
+                </div>
+                <code class="text-[11px] px-2 py-0.5 rounded bg-slate-900 text-indigo-300">/game-stats</code>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-800 py-8 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-center gap-5">
+      <a href="./index.html" class="hover:text-white transition" data-en="Main Page" data-de="Hauptseite">Hauptseite</a>
+      <a href="./packs.html" class="hover:text-white transition" data-en="League Overlay Packs" data-de="League-Overlay-Packs">League-Overlay-Packs</a>
+      <a href="./packs-preview.html" class="hover:text-white transition" data-en="League Live Preview" data-de="League-Live-Vorschau">League-Live-Vorschau</a>
+      <a href="https://github.com/Lyyrrrriccs/OmniGrid-Studio" target="_blank" class="hover:text-white transition">GitHub</a>
+    </div>
+  </footer>
+
+  <script>
+    // 1. Language Toggle (DE default)
+    let curLang = 'de';
+    function applyLang() {
+      document.querySelectorAll('[data-de][data-en]').forEach((el) => {
+        el.textContent = curLang === 'de' ? el.getAttribute('data-de') : el.getAttribute('data-en');
+      });
+    }
+    document.getElementById('langToggle').addEventListener('click', () => {
+      curLang = curLang === 'de' ? 'en' : 'de';
+      applyLang();
+    });
+
+    // 2. Category Filter
+    document.querySelectorAll('.filter-pill').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-pill').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        const f = btn.getAttribute('data-filter');
+        document.querySelectorAll('.set-card').forEach((card) => {
+          card.style.display = (f === 'all' || card.getAttribute('data-cat') === f) ? '' : 'none';
+        });
+      });
+    });
+
+    // 3. Interactive Product Presentation Agenda Stepper + Spotlight Toggle
+    const agendaSteps = [
+      '01 • Design & Material',
+      '02 • Performance & Akku',
+      '03 • Live-Demo im Studio',
+      '04 • Preis & Verfügbarkeit'
+    ];
+    let prodStep = 0;
+    function renderProdStep() {
+      document.getElementById('prodStepBadge').textContent = 'KAPITEL ' + (prodStep + 1) + ' / ' + agendaSteps.length;
+      document.getElementById('prodAgendaLabel').textContent = agendaSteps[prodStep];
+    }
+    document.getElementById('prodPrevBtn').addEventListener('click', () => {
+      prodStep = (prodStep - 1 + agendaSteps.length) % agendaSteps.length;
+      renderProdStep();
+    });
+    document.getElementById('prodNextBtn').addEventListener('click', () => {
+      prodStep = (prodStep + 1) % agendaSteps.length;
+      renderProdStep();
+    });
+    document.getElementById('prodCardToggle').addEventListener('click', () => {
+      document.getElementById('prodSpotlightCard').classList.toggle('is-hidden');
+    });
+
+    // 4. Interactive DJ Stream Multi-Color Scheme + 60fps Audio Spectrum & Vinyl
+    const DJ_SCHEMES = {
+      cyber_club: ['#00e5ff', '#ff2a6d', '#c084fc'],
+      sunset_house: ['#ff5e3a', '#fbbf24', '#ec4899'],
+      techno_mono: ['#f8fafc', '#ef4444', '#94a3b8'],
+      acid_rave: ['#a3e635', '#a855f7', '#22d3ee'],
+      ibiza_gold: ['#f5c542', '#2dd4bf', '#fde68a']
+    };
+    let djScheme = 'cyber_club';
+    let djPlaying = true;
+    const djStageBox = document.getElementById('djStageBox');
+    const djDeckBox = document.getElementById('djDeckBox');
+    const djVinylEl = document.getElementById('djVinylEl');
+    const djMiniEq = document.getElementById('djMiniEq');
+    const djCanvas = document.getElementById('djStageCanvas');
+    const djCtx = djCanvas.getContext('2d');
+    const smoothBars = new Float32Array(36);
+
+    for (let i = 0; i < 14; i++) {
+      const bar = document.createElement('div');
+      bar.style.cssText = 'flex:1;border-radius:2px 2px 0 0;height:20%;background:linear-gradient(180deg,var(--dj-s),var(--dj-p));transition:height 0.06s linear;';
+      djMiniEq.appendChild(bar);
+    }
+
+    document.querySelectorAll('.dj-scheme-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dj-scheme-btn').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        djScheme = btn.getAttribute('data-scheme');
+        djStageBox.className = 'dj-stage-box scheme-' + djScheme;
+        djDeckBox.className = 'dj-deck-box scheme-' + djScheme + ' p-3.5 flex items-center gap-4';
+      });
+    });
+
+    document.getElementById('djPlayToggle').addEventListener('click', (ev) => {
+      djPlaying = !djPlaying;
+      djVinylEl.classList.toggle('paused', !djPlaying);
+      const btn = ev.currentTarget;
+      btn.innerHTML = djPlaying
+        ? '🔊 <span>' + (curLang === 'de' ? 'Musik: Läuft' : 'Music: Playing') + '</span>'
+        : '⏸️ <span>' + (curLang === 'de' ? 'Musik: Pausiert' : 'Music: Paused') + '</span>';
+    });
+
+    function tickDj(now) {
+      requestAnimationFrame(tickDj);
+      const w = djCanvas.clientWidth || 800;
+      const h = djCanvas.clientHeight || 120;
+      if (djCanvas.width !== w || djCanvas.height !== h) { djCanvas.width = w; djCanvas.height = h; }
+      djCtx.clearRect(0, 0, w, h);
+
+      const cols = DJ_SCHEMES[djScheme] || DJ_SCHEMES.cyber_club;
+      const beatPhase = (now / 1000) * (128 / 60) * Math.PI * 2;
+      const beatPulse = Math.pow(Math.max(0, Math.sin(beatPhase * 0.5)), 4);
+      const barCount = 36;
+      const padX = 18;
+      const gap = 5;
+      const barW = Math.max(4, (w - padX * 2 - gap * (barCount - 1)) / barCount);
+      const baseY = h - 8;
+      const maxH = h - 20;
+
+      let avg = 0;
+      for (let i = 0; i < barCount; i++) {
+        const distMid = Math.abs(i - (barCount - 1) / 2) / ((barCount - 1) / 2);
+        const wave = Math.abs(Math.sin(now * 0.0055 + i * 0.45) * Math.cos(now * 0.003 - i * 0.22));
+        const target = djPlaying ? (0.14 + wave * (0.55 + beatPulse * 0.35) * (1 - distMid * 0.32)) : 0.06;
+        smoothBars[i] += (target - smoothBars[i]) * 0.26;
+        avg += smoothBars[i];
+      }
+      avg /= barCount;
+
+      const floorGrad = djCtx.createLinearGradient(0, baseY - 34, 0, baseY + 6);
+      floorGrad.addColorStop(0, 'rgba(0,0,0,0)');
+      floorGrad.addColorStop(1, cols[0]);
+      djCtx.globalAlpha = 0.14 + avg * 0.42;
+      djCtx.fillStyle = floorGrad;
+      djCtx.fillRect(padX, baseY - 34, w - padX * 2, 40);
+
+      const barGrad = djCtx.createLinearGradient(0, baseY, 0, baseY - maxH);
+      barGrad.addColorStop(0, cols[0]);
+      barGrad.addColorStop(0.58, cols[1]);
+      barGrad.addColorStop(1, cols[2]);
+      djCtx.globalAlpha = 0.94;
+      djCtx.fillStyle = barGrad;
+
+      for (let i = 0; i < barCount; i++) {
+        const bh = Math.max(3, smoothBars[i] * maxH);
+        const x = padX + i * (barW + gap);
+        djCtx.fillRect(x, baseY - bh, barW, bh);
+        djCtx.fillStyle = '#ffffff';
+        djCtx.fillRect(x, baseY - bh - 3, barW, 2);
+        djCtx.fillStyle = barGrad;
+      }
+      djCtx.globalAlpha = 1;
+
+      const miniBars = djMiniEq.children;
+      for (let i = 0; i < miniBars.length; i++) {
+        const mh = djPlaying ? Math.round(18 + Math.abs(Math.sin(now * 0.0065 + i * 0.55)) * 78) : 12;
+        miniBars[i].style.height = mh + '%';
+      }
+    }
+    requestAnimationFrame(tickDj);
+  </script>
+</body>
+</html>
