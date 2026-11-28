@@ -10333,6 +10333,85 @@ window.omnichat.discordLiveGet?.().then((r) => renderDiscordLiveStatus(r?.state)
     window.omnichat.themesOpenDir?.();
   });
 
+  // Live 18-Band FFT Audio-Device Analyzer for DJ Sona Equalizer (optional Pro Mode; Auto uses OBS InputVolumeMeters + Spotify/Music Sync)
+  const eqSel = document.getElementById('gaDjAudioDeviceSelect');
+  const btnRefreshEqDev = document.getElementById('btnGaRefreshAudioDevices');
+  let eqStream = null;
+  let eqCtx = null;
+  let eqRaf = 0;
+
+  function stopLiveAudioEq() {
+    if (eqRaf) { cancelAnimationFrame(eqRaf); eqRaf = 0; }
+    if (eqStream) { eqStream.getTracks().forEach((tr) => tr.stop()); eqStream = null; }
+    if (eqCtx) { eqCtx.close().catch(() => {}); eqCtx = null; }
+  }
+
+  async function populateAudioEqDevices() {
+    if (!eqSel || !navigator.mediaDevices?.enumerateDevices) return;
+    const prev = eqSel.value || 'auto';
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      const inputs = devs.filter((d) => d.kind === 'audioinput');
+      eqSel.innerHTML = '<option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>';
+      inputs.forEach((d, idx) => {
+        const opt = document.createElement('option');
+        opt.value = d.deviceId;
+        opt.textContent = `🎛️ 18-Band FFT: ${d.label || `Audio-Eingang ${idx + 1}`}`;
+        eqSel.appendChild(opt);
+      });
+      eqSel.value = Array.from(eqSel.options).some((o) => o.value === prev) ? prev : 'auto';
+    } catch (e) {}
+  }
+
+  async function startLiveAudioEq(deviceId) {
+    stopLiveAudioEq();
+    if (!deviceId || deviceId === 'auto' || !navigator.mediaDevices?.getUserMedia) return;
+    try {
+      eqStream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: { exact: deviceId }, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+        video: false
+      });
+      eqCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = eqCtx.createMediaStreamSource(eqStream);
+      const analyser = eqCtx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = 0.72;
+      src.connect(analyser);
+      const bins = new Uint8Array(analyser.frequencyBinCount);
+      let lastSend = 0;
+      function tickEq(now) {
+        eqRaf = requestAnimationFrame(tickEq);
+        if (now - lastSend < 33) return;
+        lastSend = now;
+        analyser.getByteFrequencyData(bins);
+        const bands = [];
+        let sum = 0;
+        for (let i = 0; i < 18; i++) {
+          const idx = Math.min(bins.length - 1, Math.floor(i * 1.9));
+          const v = Math.min(1, (bins[idx] || 0) / 230);
+          bands.push(Number(v.toFixed(3)));
+          sum += v;
+        }
+        const level = Number(Math.min(1, (sum / 18) * 1.35).toFixed(3));
+        window.omnichat.sendAudioEqFrame?.({ level, bands });
+      }
+      eqRaf = requestAnimationFrame(tickEq);
+      if (statusEl) {
+        statusEl.style.color = '#38bdf8';
+        statusEl.textContent = '🎧 DJ Sona 18-Band Live FFT-Equalizer aktiv!';
+      }
+    } catch (err) {
+      if (statusEl) {
+        statusEl.style.color = '#f87171';
+        statusEl.textContent = `⚠️ Audio-Eingang konnte nicht geöffnet werden: ${err.message}`;
+      }
+    }
+  }
+
+  eqSel?.addEventListener('change', () => startLiveAudioEq(eqSel.value));
+  btnRefreshEqDev?.addEventListener('click', populateAudioEqDevices);
+  populateAudioEqDevices();
+
   document.getElementById('btnOpenGameAddons')?.addEventListener('click', loadThemes);
   loadThemes();
 })();

@@ -156,8 +156,8 @@ class ObsWsClient extends EventEmitter {
         }
 
         if (msg.op === 0) {
-          // Hello -> send Identify (op 1)
-          const identifyData = { rpcVersion: 1 };
+          // Hello -> send Identify (op 1), include InputVolumeMeters (1<<16 = 65536) for live DJ Sona EQ
+          const identifyData = { rpcVersion: 1, eventSubscriptions: 2047 | 65536 };
           if (msg.d?.authentication) {
             const { challenge, salt } = msg.d.authentication;
             const secret = obsRpcChallengeDigestBase64(this.lastOpts.rpcToken + salt);
@@ -236,6 +236,39 @@ class ObsWsClient extends EventEmitter {
       eventData.inputName === this.state.micName
     ) {
       this._updateState({ micMuted: Boolean(eventData.inputMuted) });
+    } else if (eventType === 'InputVolumeMeters' && Array.isArray(eventData?.inputs)) {
+      const micLow = String(this.state.micName || '').toLowerCase();
+      let bestLevel = 0;
+      let bestL = 0;
+      let bestR = 0;
+      let bestName = '';
+      for (const inp of eventData.inputs) {
+        const name = String(inp?.inputName || '');
+        const low = name.toLowerCase();
+        if (micLow && low === micLow) continue;
+        if (/\b(mic|mikro|mikrofon|headset)\b/i.test(low)) continue;
+        const ch = Array.isArray(inp?.inputLevelsMul) ? inp.inputLevelsMul : [];
+        if (!ch.length) continue;
+        const lRaw = Number(ch[0]?.[1] ?? ch[0]?.[0] ?? 0) || 0;
+        const rRaw = Number((ch[1] || ch[0])?.[1] ?? (ch[1] || ch[0])?.[0] ?? 0) || 0;
+        const boost = /spotify|music|musik|amazon|apple|desktop|system|browser|chrome|edge|firefox/i.test(low) ? 1.15 : 1.0;
+        const lv = Math.min(1, Math.pow(Math.max(lRaw, rRaw), 0.55) * boost);
+        if (lv > bestLevel) {
+          bestLevel = lv;
+          bestL = Math.min(1, Math.pow(lRaw, 0.55));
+          bestR = Math.min(1, Math.pow(rRaw, 0.55));
+          bestName = name;
+        }
+      }
+      if (bestLevel > 0.005 || this._lastObsMeterActive) {
+        this._lastObsMeterActive = bestLevel > 0.005;
+        this.emit('audio-meter', {
+          level: Number(bestLevel.toFixed(3)),
+          left: Number(bestL.toFixed(3)),
+          right: Number(bestR.toFixed(3)),
+          sourceName: bestName
+        });
+      }
     }
   }
 

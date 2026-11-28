@@ -2343,6 +2343,13 @@
           <button class="btn-sm" id="btnGaCheckThemeUpdates" title="Installierte Overlay-Packs auf Überarbeitungen prüfen und automatisch aktualisieren">🔄 Pack-Updates</button>
           <button class="btn-sm" id="btnGaExportThemePack" title="Aktuelles Design-Pack als .json-Vorlage exportieren">📤 Export</button>
           <button class="btn-sm" id="btnGaOpenThemesDir" title="Lokalen themes/-Ordner öffnen">📂 Ordner</button>
+          <div id="gaDjAudioEqRow" style="display: flex; gap: 6px; align-items: center; width: 100%; padding-top: 6px; border-top: 1px solid rgba(0,229,255,0.22);">
+            <span style="font-size: 11px; font-weight: 700; color: #67e8f9;">🎧 Live Audio-EQ (DJ Sona):</span>
+            <select id="gaDjAudioDeviceSelect" style="flex: 1; min-width: 190px; font-size: 11px;">
+              <option value="auto">Auto (OBS Audio-Pegel + Spotify/Music Sync)</option>
+            </select>
+            <button class="btn-sm" id="btnGaRefreshAudioDevices" type="button" title="Audio-Eingänge (z. B. BlackHole / Loopback / Stereo Mix) neu scannen">🔄 Geräte</button>
+          </div>
         </div>
 
         <div id="gaJcControls" class="hidden" style="display: flex; flex-direction: column; gap: 9px; margin-top: 10px; padding: 10px 11px; border-radius: 8px; background: rgba(15,23,42,0.68); border: 1px solid rgba(236,72,153,0.4);">

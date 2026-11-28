@@ -4825,37 +4825,56 @@ const OBS_LOL_ABILITY_BAR_HTML = `<!DOCTYPE html>
         for (let i = 0; i < 18; i++) {
           const b = document.createElement('div');
           b.className = 'ab-eq-bar';
-          b.style.animationDuration = (0.45 + ((i * 19) % 7) * 0.11).toFixed(2) + 's';
-          b.style.animationDelay = ((i % 5) * 0.08).toFixed(2) + 's';
+          b.style.animation = 'none';
+          b.style.transition = 'height 0.06s linear, opacity 0.12s ease';
+          b.style.height = '12%';
           eqEl.appendChild(b);
         }
       }
 
-      function applyThemeBadge(t) {
-        if (!t || !t.id || t.id === 'none') {
-          if (iconEl) iconEl.textContent = '⚔️';
-          if (textEl) textEl.textContent = 'HEXTECH HUD';
-          return;
+      let musicPlaying = true;
+      let liveEq = null;
+      let liveEqAt = 0;
+
+      function tickAbEq(now) {
+        requestAnimationFrame(tickAbEq);
+        if (!eqEl || !document.body.classList.contains('champ-fx-dj-sona')) return;
+        const bars = eqEl.children;
+        const fresh = liveEq && (now - liveEqAt) < 700;
+        const bands = fresh && Array.isArray(liveEq.bands) && liveEq.bands.length >= 18 ? liveEq.bands : null;
+        for (let i = 0; i < bars.length; i++) {
+          let h = 12;
+          if (bands) {
+            h = Math.max(10, Math.min(100, Math.round(bands[i] * 100)));
+          } else if (fresh && typeof liveEq.level === 'number') {
+            const lv = liveEq.level;
+            const side = i < 9 ? (liveEq.left ?? lv) : (liveEq.right ?? lv);
+            const curve = 0.65 + 0.35 * Math.sin((i / 17) * Math.PI);
+            const ripple = 0.72 + 0.28 * Math.sin(now * 0.018 + i * 0.85);
+            h = Math.max(10, Math.min(100, Math.round(10 + side * curve * ripple * 96)));
+          } else if (musicPlaying) {
+            const synth = Math.abs(Math.sin(now * 0.006 + i * 0.52) * Math.cos(now * 0.0032 - i * 0.27));
+            h = Math.round(16 + synth * 78);
+          } else {
+            h = 10 + Math.round(Math.sin(now * 0.002 + i * 0.4) * 3 + 3);
+          }
+          bars[i].style.height = h + '%';
+          bars[i].style.opacity = (!fresh && !musicPlaying) ? '0.42' : '0.96';
         }
-        if (iconEl) iconEl.textContent = t.icon || '⚔️';
-        const shortName = String(t.name || 'CHAMPION HUD').split('—')[0].trim().toUpperCase();
-        if (textEl) textEl.textContent = shortName;
       }
+      requestAnimationFrame(tickAbEq);
 
-      function loadTheme() {
-        fetch('/api/champion-theme')
-          .then((r) => (r.ok ? r.json() : null))
-          .then((t) => { if (t) applyThemeBadge(t); })
-          .catch(() => {});
-      }
-
-      loadTheme();
       try {
         const ws = new WebSocket('ws://' + location.host);
         ws.onmessage = (ev) => {
           try {
             const p = JSON.parse(ev.data);
-            if (p.type === 'champion-theme') applyThemeBadge(p.data);
+            if (p.type === 'spotify' && p.data) {
+              musicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+            } else if (p.type === 'audio-eq' && p.data) {
+              liveEq = p.data;
+              liveEqAt = performance.now();
+            }
           } catch (e) {}
         };
       } catch (e) {}
@@ -8082,6 +8101,11 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
   let sigEdgeRaf = 0;
   let sigEdgeCanvas = null;
   let sigEdgeMode = '';
+  let djMusicPlaying = true;
+  let djLastTrackTitle = '';
+  let djStanceIdx = 0;
+  let djLiveAudioLevel = 0;
+  let djLiveAudioAt = 0;
   function drawBatchedRibbon(ctx, poly, uHead, uLen, col1, col2, width, waveAmp, waveFreq, now) {
     const steps = 16;
     const pts = [];
@@ -8207,11 +8231,15 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
           drawBatchedRibbon(ctx, poly, -ph * 0.85 + 0.5, 0.18, '#a855f7', '#38bdf8', 2.2, 4.0, 12, now);
           moteCol = Math.random() < 0.5 ? '#a855f7' : '#38bdf8';
         } else if (m === 'dj-sona') {
-          const si = Math.floor(now / 2200) % 3;
+          const freshAudio = (now - djLiveAudioAt) < 700;
+          const si = djStanceIdx % 3;
           const colA = sonaCols[si], colB = sonaCols[(si + 1) % 3];
-          const beatAmp = 2.5 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.5;
-          head = drawBatchedRibbon(ctx, poly, ph * 1.15, 0.30, colA, colB, 2.6, beatAmp, 24, now);
-          drawBatchedRibbon(ctx, poly, ph * 1.15 + 0.5, 0.28, colB, colA, 2.2, beatAmp * 0.85, 22, now);
+          const beatAmp = freshAudio
+            ? (1.2 + djLiveAudioLevel * 10.5)
+            : (djMusicPlaying ? (2.2 + Math.pow(Math.max(0, Math.sin(now * 0.013)), 3) * 6.0) : 0.6);
+          const speedMul = (!freshAudio && !djMusicPlaying) ? 0.35 : 1.15;
+          head = drawBatchedRibbon(ctx, poly, ph * speedMul, 0.30, colA, colB, 2.6, beatAmp, 24, now);
+          drawBatchedRibbon(ctx, poly, ph * speedMul + 0.5, 0.28, colB, colA, 2.2, beatAmp * 0.85, 22, now);
           moteCol = colA;
         } else if (m === 'eve-firestarter') {
           head = drawBatchedRibbon(ctx, poly, ph * 1.05, 0.26, '#ff1e6b', '#a855f7', 2.8, 5.2, 14, now);
@@ -8294,7 +8322,19 @@ ${ALL_OVERLAY_CARDS_SEL.filter((s) => s !== '.gs-card' && s !== '.map-cover').ma
     try {
       const ws = new WebSocket('ws://' + location.host);
       ws.onmessage = (ev) => {
-        try { const p = JSON.parse(ev.data); if (p.type === 'champion-theme') applyChampPack(p.data); } catch (e) {}
+        try {
+          const p = JSON.parse(ev.data);
+          if (p.type === 'champion-theme') applyChampPack(p.data);
+          else if (p.type === 'spotify' && p.data) {
+            djMusicPlaying = p.data.isPlaying !== false && Boolean(p.data.title);
+            const ttl = String(p.data.title || '');
+            if (ttl && djLastTrackTitle && ttl !== djLastTrackTitle) djStanceIdx = (djStanceIdx + 1) % 3;
+            if (ttl) djLastTrackTitle = ttl;
+          } else if (p.type === 'audio-eq' && p.data) {
+            djLiveAudioLevel = Math.max(0, Math.min(1, Number(p.data.level) || 0));
+            djLiveAudioAt = performance.now();
+          }
+        } catch (e) {}
       };
       ws.onclose = () => setTimeout(connectThemeWs, 2500);
     } catch (e) {}
@@ -8803,6 +8843,10 @@ class ObsServer {
   broadcastSpotify(track) {
     this.currentSpotify = track;
     this._broadcast({ type: 'spotify', data: track });
+  }
+
+  broadcastAudioEq(payload) {
+    this._broadcast({ type: 'audio-eq', data: payload });
   }
 
   broadcastAppearance(appearance) {

@@ -2136,6 +2136,21 @@ function triggerTransitionRule(rule) {
   obsServer.broadcastSceneTransition({ mode: 'theme' });
 }
 
+let lastAudioEqBroadcastAt = 0;
+obsWs.on('audio-meter', (meter) => {
+  const activePack = obsServer.getEffectiveChampionTheme?.();
+  if (!activePack || activePack.effect !== 'dj-sona') return;
+  const now = Date.now();
+  if (now - lastAudioEqBroadcastAt < 33) return;
+  lastAudioEqBroadcastAt = now;
+  obsServer.broadcastAudioEq({ source: 'obs', level: meter.level, left: meter.left, right: meter.right, ts: now });
+});
+
+ipcMain.on('audio-eq-frame', (_ev, payload) => {
+  if (!payload) return;
+  obsServer.broadcastAudioEq({ ...payload, source: 'fft', ts: Date.now() });
+});
+
 let tempPreviewTransitionPath = '';
 let lastObsConnectedState = false;
 let lastObsProgramScene = '';
